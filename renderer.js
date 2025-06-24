@@ -1,4 +1,6 @@
 const { ipcRenderer } = require('electron');
+const LLMService = require('./src/llm-service');
+const LaTeXRenderer = require('./src/latex-renderer');
 
 class QTIGenerator {
     constructor() {
@@ -9,6 +11,8 @@ class QTIGenerator {
             questions: []
         };
         this.questionCounter = 0;
+        this.llmService = new LLMService();
+        this.latexRenderer = new LaTeXRenderer();
         this.init();
     }
 
@@ -18,6 +22,7 @@ class QTIGenerator {
     }
 
     bindEvents() {
+        // Original events
         document.getElementById('newAssessment').addEventListener('click', () => this.newAssessment());
         document.getElementById('saveAssessment').addEventListener('click', () => this.saveAssessment());
         document.getElementById('exportQTI').addEventListener('click', () => this.exportQTI());
@@ -33,6 +38,31 @@ class QTIGenerator {
         
         document.getElementById('timeLimit').addEventListener('input', (e) => {
             this.assessment.timeLimit = parseInt(e.target.value) || 0;
+        });
+
+        // New AI and PDF events
+        document.getElementById('uploadBtn').addEventListener('click', () => {
+            document.getElementById('pdfUpload').click();
+        });
+
+        document.getElementById('pdfUpload').addEventListener('change', (e) => {
+            this.handlePDFUpload(e);
+        });
+
+        document.getElementById('generateQuestions').addEventListener('click', () => {
+            this.generateQuestionsWithAI();
+        });
+
+        // LaTeX preview events
+        document.addEventListener('input', (e) => {
+            if (e.target.classList.contains('question-text') || e.target.classList.contains('choice-text')) {
+                this.updateMathPreview(e.target);
+            }
+        });
+
+        // API key validation
+        document.getElementById('apiKey').addEventListener('blur', () => {
+            this.validateApiKey();
         });
     }
 
@@ -522,12 +552,225 @@ class QTIGenerator {
 
     escapeXML(text) {
         if (!text) return '';
-        return text.toString()
+        // First process LaTeX for QTI, then escape XML
+        const processedText = this.latexRenderer.prepareForQTI(text);
+        return processedText.toString()
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&apos;');
+    }
+
+    // New methods for AI and LaTeX functionality
+
+    async handlePDFUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const fileName = document.getElementById('fileName');
+        fileName.textContent = file.name;
+
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+            const extractedText = await this.llmService.extractTextFromPDF(buffer);
+            
+            document.getElementById('contextText').value = extractedText;
+            alert('PDF text extracted successfully!');
+        } catch (error) {
+            console.error('PDF extraction error:', error);
+            alert(`Error extracting text from PDF: ${error.message}`);
+        }
+    }
+
+    async generateQuestionsWithAI() {
+        const generateBtn = document.getElementById('generateQuestions');
+        const originalText = generateBtn.textContent;
+        
+        try {
+            generateBtn.textContent = 'Generating...';
+            generateBtn.disabled = true;
+
+            // Get generation parameters
+            const context = document.getElementById('contextText').value.trim();
+            const questionCount = parseInt(document.getElementById('questionCount').value) || 5;
+            const difficulty = document.getElementById('difficultyLevel').value;
+            const includeMath = document.getElementById('includeMath').checked;
+
+            // Get selected question types
+            const questionTypes = Array.from(
+                document.querySelectorAll('.checkbox-group input:checked')
+            ).map(input => input.value);
+
+            if (!context) {
+                alert('Please provide context text or upload a PDF first.');
+                return;
+            }
+
+            if (questionTypes.length === 0) {
+                alert('Please select at least one question type.');
+                return;
+            }
+
+            // Validate API key
+            const provider = document.getElementById('llmProvider').value;
+            const apiKey = document.getElementById('apiKey').value.trim();
+            
+            if (!apiKey) {
+                alert('Please enter your API key first.');
+                return;
+            }
+
+            // Generate questions
+            const questions = await this.llmService.generateQuestions(context, {
+                questionCount,
+                difficulty,
+                questionTypes,
+                includeMath
+            });
+
+            // Add generated questions to assessment
+            this.addGeneratedQuestions(questions);
+            
+            alert(`Successfully generated ${questions.length} questions!`);
+
+        } catch (error) {
+            console.error('Question generation error:', error);
+            alert(`Error generating questions: ${error.message}`);
+        } finally {
+            generateBtn.textContent = originalText;
+            generateBtn.disabled = false;
+        }
+    }
+
+    addGeneratedQuestions(questions) {
+        questions.forEach(question => {
+            // Set the question type in the UI
+            document.getElementById('questionType').value = question.type;
+            
+            // Add the question
+            this.addQuestion();
+            
+            // Get the last added question element
+            const questionItems = document.querySelectorAll('.question-item');
+            const lastQuestion = questionItems[questionItems.length - 1];
+            
+            // Populate the question data
+            this.populateQuestionData(lastQuestion, question);
+        });
+        
+        this.updateAssessmentData();
+    }
+
+    populateQuestionData(questionElement, questionData) {
+        // Set question text
+        const questionTextArea = questionElement.querySelector('.question-text');
+        questionTextArea.value = questionData.text;
+        
+        // Set points
+        const pointsInput = questionElement.querySelector('.question-points');
+        pointsInput.value = questionData.points;
+
+        // Handle type-specific data
+        if (questionData.type === 'multiple_choice') {
+            // Clear existing choices
+            const choicesContainer = questionElement.querySelector('.choices-container');
+            const existingChoices = choicesContainer.querySelectorAll('.choice-item');
+            existingChoices.forEach(choice => choice.remove());
+
+            // Add new choices
+            questionData.choices.forEach((choice, index) => {
+                this.addChoiceToQuestion(questionElement, choice.text, index === questionData.correctAnswer);
+            });
+
+        } else if (questionData.type === 'true_false') {
+            const correctAnswerSelect = questionElement.querySelector('.correct-answer');
+            correctAnswerSelect.value = questionData.correctAnswer;
+
+        } else if (questionData.type === 'short_answer') {
+            const sampleAnswerTextarea = questionElement.querySelector('.sample-answer');
+            if (sampleAnswerTextarea && questionData.sampleAnswer) {
+                sampleAnswerTextarea.value = questionData.sampleAnswer;
+            }
+
+        } else if (questionData.type === 'essay') {
+            const gradingRubricTextarea = questionElement.querySelector('.grading-rubric');
+            if (gradingRubricTextarea && questionData.gradingRubric) {
+                gradingRubricTextarea.value = questionData.gradingRubric;
+            }
+        }
+
+        // Update math preview
+        this.updateMathPreview(questionTextArea);
+    }
+
+    addChoiceToQuestion(questionElement, choiceText, isCorrect = false) {
+        const choicesContainer = questionElement.querySelector('.choices-container');
+        const addButton = choicesContainer.querySelector('.btn-add-choice');
+        const choiceCount = choicesContainer.querySelectorAll('.choice-item').length;
+        
+        const choiceDiv = document.createElement('div');
+        choiceDiv.className = 'choice-item';
+        choiceDiv.innerHTML = `
+            <input type="radio" name="correct-choice-${questionElement.dataset.questionId}" value="${choiceCount}" ${isCorrect ? 'checked' : ''}>
+            <input type="text" class="choice-text" value="${choiceText}" placeholder="Choice ${String.fromCharCode(65 + choiceCount)}">
+            <button class="btn-remove-choice">×</button>
+        `;
+        
+        choicesContainer.insertBefore(choiceDiv, addButton);
+        
+        // Bind events for the new choice
+        choiceDiv.querySelector('.btn-remove-choice').addEventListener('click', () => {
+            choiceDiv.remove();
+            this.updateAssessmentData();
+        });
+        
+        choiceDiv.querySelector('input').addEventListener('input', () => this.updateAssessmentData());
+        choiceDiv.querySelector('.choice-text').addEventListener('input', (e) => {
+            this.updateMathPreview(e.target);
+            this.updateAssessmentData();
+        });
+    }
+
+    updateMathPreview(inputElement) {
+        if (!inputElement) return;
+        
+        const text = inputElement.value;
+        let previewElement = inputElement.parentElement.querySelector('.math-preview');
+        
+        if (!previewElement) {
+            previewElement = document.createElement('div');
+            previewElement.className = 'math-preview';
+            inputElement.parentElement.appendChild(previewElement);
+        }
+        
+        this.latexRenderer.previewMath(text, previewElement);
+    }
+
+    async validateApiKey() {
+        const provider = document.getElementById('llmProvider').value;
+        const apiKey = document.getElementById('apiKey').value.trim();
+        
+        if (!apiKey) return;
+        
+        try {
+            const isValid = await this.llmService.testApiKey(provider, apiKey);
+            const apiKeyInput = document.getElementById('apiKey');
+            
+            if (isValid) {
+                apiKeyInput.style.borderColor = '#27ae60';
+                apiKeyInput.title = 'API key is valid';
+            } else {
+                apiKeyInput.style.borderColor = '#e74c3c';
+                apiKeyInput.title = 'API key is invalid';
+            }
+        } catch (error) {
+            console.error('API key validation error:', error);
+            const apiKeyInput = document.getElementById('apiKey');
+            apiKeyInput.style.borderColor = '#e74c3c';
+            apiKeyInput.title = 'Error validating API key';
+        }
     }
 }
 
