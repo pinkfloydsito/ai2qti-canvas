@@ -1,0 +1,37 @@
+{
+  "name": "qti-generator",
+  "version": "1.0.0",
+  "description": "Electron app to generate QTI files for Canvas LMS",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --publish=never"
+  },
+  "keywords": ["electron", "qti", "canvas", "lms", "assessment"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^36.5.0",
+    "electron-builder": "^24.0.0"
+  },
+  "dependencies": {
+    "xml2js": "^0.6.2"
+  },
+  "build": {
+    "appId": "com.qti-generator.app",
+    "productName": "QTI Generator",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "renderer.html",
+      "renderer.js",
+      "styles.css",
+      "node_modules/**/*"
+    ]
+  }
+}
