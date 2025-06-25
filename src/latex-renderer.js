@@ -144,25 +144,69 @@ class LaTeXRenderer {
         }
     }
 
-    // Process text for QTI export (convert LaTeX to MathML)
+    // Process text for QTI export (Canvas LMS compatible format)
     prepareForQTI(text) {
         if (!text) return '';
         
         let processed = text;
         
-        // Convert display math ($$...$$) to MathML
+        // Canvas LMS expects LaTeX in img tags with equation_image class
+        // Convert display math ($$...$$) to Canvas-compatible format
         processed = processed.replace(/\$\$(.*?)\$\$/g, (match, latex) => {
-            const mathml = this.latexToMathML(latex.trim());
-            return `<div class="math-display">${mathml}</div>`;
+            const cleanLatex = this.prepareLatexForCanvas(latex.trim());
+            const encodedLatex = this.encodeLatexForCanvas(cleanLatex);
+            const baseUrl = 'https://aulavirtual.espol.edu.ec/equation_images/';
+            
+            return `<img class="equation_image" style="display: block; margin-left: auto; margin-right: auto;" title="${cleanLatex}" src="${baseUrl}${encodedLatex}" alt="LaTeX: ${cleanLatex}" data-equation-content="${cleanLatex}">`;
         });
         
-        // Convert inline math ($...$) to MathML
+        // Convert inline math ($...$) to Canvas-compatible format  
         processed = processed.replace(/\$([^$]+)\$/g, (match, latex) => {
-            const mathml = this.latexToMathML(latex.trim());
-            return `<span class="math-inline">${mathml}</span>`;
+            const cleanLatex = this.prepareLatexForCanvas(latex.trim());
+            const encodedLatex = this.encodeLatexForCanvas(cleanLatex);
+            const baseUrl = 'https://aulavirtual.espol.edu.ec/equation_images/';
+            
+            return `<img class="equation_image" title="${cleanLatex}" src="${baseUrl}${encodedLatex}" alt="LaTeX: ${cleanLatex}" data-equation-content="${cleanLatex}">`;
         });
         
         return processed;
+    }
+
+    // Prepare LaTeX for Canvas LMS compatibility
+    prepareLatexForCanvas(latex) {
+        return latex
+            // Ensure proper escaping for Canvas
+            .replace(/\\\\/g, '\\\\')
+            // Fix common Canvas LaTeX issues
+            .replace(/\\text\{([^}]*)\}/g, '\\textrm{$1}') // Canvas prefers \textrm over \text
+            .replace(/\\degree/g, '^\\circ') // Degree symbol compatibility
+            .replace(/°/g, '^\\circ') // Convert degree symbol to LaTeX
+            // Ensure fractions are properly formatted
+            .replace(/\\frac\s*\{([^}]*)\}\s*\{([^}]*)\}/g, '\\frac{$1}{$2}');
+    }
+
+    // Encode LaTeX for Canvas equation image URLs
+    encodeLatexForCanvas(latex) {
+        // Canvas uses a specific URL encoding for LaTeX equations
+        // Based on sample.xml pattern: \frac{k}{2} becomes %255Cfrac%257Bk%257D%257B2%257D
+        return encodeURIComponent(latex)
+            // Double encode certain characters as seen in Canvas URLs
+            .replace(/%/g, '%25')
+            .replace(/\\/g, '%255C')
+            .replace(/{/g, '%257B')
+            .replace(/}/g, '%257D')
+            .replace(/\(/g, '%2528')
+            .replace(/\)/g, '%2529')
+            .replace(/\[/g, '%255B')
+            .replace(/\]/g, '%255D')
+            .replace(/ /g, '%2520')
+            .replace(/=/g, '%253D')
+            .replace(/\+/g, '%252B')
+            .replace(/,/g, '%252C')
+            .replace(/:/g, '%253A')
+            .replace(/\^/g, '%255E')
+            .replace(/_/g, '%255F')
+            .replace(/&/g, '%2526');
     }
 
     // Common math symbols and their LaTeX codes for help

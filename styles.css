@@ -492,3 +492,62 @@ main {
         min-width: 200px;
     }
 }
+
+/* Math Preview Styles */
+.math-preview {
+    margin-top: 8px;
+    padding: 10px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.4;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.math-preview-content {
+    color: #2c3e50;
+}
+
+.math-preview .katex {
+    font-size: 1.1em;
+}
+
+.math-preview .katex-display {
+    margin: 8px 0;
+    text-align: center;
+}
+
+.katex-error {
+    color: #e74c3c;
+    background: #ffeaea;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+/* Input fields with math content */
+.question-text,
+.choice-text {
+    font-family: 'Courier New', monospace;
+}
+
+.choice-item {
+    position: relative;
+}
+
+.choice-item .math-preview {
+    margin-top: 5px;
+    margin-left: 25px; /* Account for radio button */
+    font-size: 13px;
+    padding: 6px 8px;
+}
+
+/* Math preview for question text */
+.question-content .math-preview {
+    margin-top: 8px;
+    background: #fff3cd;
+    border-color: #ffeaa7;
+}

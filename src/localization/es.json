@@ -1,0 +1,109 @@
+{
+  "app": {
+    "title": "Generador de QTI para Canvas LMS",
+    "toolbar": {
+      "newAssessment": "Nueva Evaluación",
+      "save": "Guardar",
+      "exportQTI": "Exportar QTI"
+    }
+  },
+  "aiGeneration": {
+    "title": "Generación de Preguntas con IA",
+    "uploadPdf": "Subir PDF o Ingresar Texto:",
+    "chooseFile": "Elegir Archivo PDF",
+    "contextText": "O Ingresa Contexto de Texto:",
+    "contextPlaceholder": "Ingresa el contenido/contexto para la generación de preguntas... (Si falla la carga del PDF, copia y pega tu contenido aquí)",
+    "tip": "💡 Consejo: Si la extracción del PDF no funciona, puedes copiar el texto de tu PDF y pegarlo aquí manualmente.",
+    "questionCount": "Número de Preguntas:",
+    "difficulty": "Nivel de Dificultad:",
+    "difficultyLevels": {
+      "easy": "Fácil",
+      "medium": "Medio",
+      "hard": "Difícil",
+      "mixed": "Mixto"
+    },
+    "questionTypes": "Tipos de Preguntas:",
+    "typeLabels": {
+      "multipleChoice": "Opción Múltiple",
+      "trueFalse": "Verdadero/Falso",
+      "shortAnswer": "Respuesta Corta",
+      "essay": "Ensayo"
+    },
+    "includeMath": "Incluir notación LaTeX matemática para contenido matemático",
+    "generateBtn": "Generar Preguntas con IA",
+    "generating": "Generando..."
+  },
+  "assessment": {
+    "title": "Detalles de la Evaluación",
+    "titleField": "Título:",
+    "titlePlaceholder": "Ingresa el título de la evaluación",
+    "description": "Descripción:",
+    "descriptionPlaceholder": "Ingresa la descripción de la evaluación",
+    "timeLimit": "Límite de Tiempo (minutos):",
+    "timeLimitPlaceholder": "0 para sin límite"
+  },
+  "settings": {
+    "title": "Configuración de LLM",
+    "provider": "Proveedor de LLM:",
+    "apiKey": "Clave API:",
+    "apiKeyPlaceholder": "Ingresa tu clave API",
+    "apiKeyTip": "💡 Tu clave API se almacena de forma segura y se guarda en caché por 10 minutos"
+  },
+  "questions": {
+    "title": "Preguntas",
+    "questionNumber": "Pregunta",
+    "addQuestion": "Agregar Pregunta",
+    "questionType": "Tipo de Pregunta:",
+    "questionText": "Texto de la Pregunta:",
+    "questionTextPlaceholder": "Ingresa el texto de tu pregunta aquí...",
+    "points": "Puntos:",
+    "choices": "Opciones:",
+    "addChoice": "Agregar Opción",
+    "choicePlaceholder": "Opción",
+    "correctAnswer": "Respuesta Correcta:",
+    "sampleAnswer": "Respuesta de Ejemplo:",
+    "gradingRubric": "Rúbrica de Calificación:",
+    "remove": "Eliminar",
+    "removeChoice": "×"
+  },
+  "messages": {
+    "success": {
+      "assessmentSaved": "¡Evaluación guardada exitosamente!",
+      "qtiExported": "¡Archivo QTI exportado exitosamente!",
+      "assessmentLoaded": "¡Evaluación cargada exitosamente!",
+      "questionsGenerated": "¡{count} preguntas generadas exitosamente!",
+      "pdfExtracted": "✓ {filename} - ¡Texto extraído exitosamente!"
+    },
+    "errors": {
+      "saveError": "Error al guardar la evaluación: {error}",
+      "exportError": "Error al exportar QTI: {error}",
+      "loadError": "Error al cargar la evaluación: {error}",
+      "parseError": "Error al analizar el archivo de evaluación",
+      "pdfError": "✗ {filename} - {error}",
+      "noContext": "Por favor proporciona texto de contexto o sube un PDF primero.",
+      "noQuestionTypes": "Por favor selecciona al menos un tipo de pregunta.",
+      "noApiKey": "Por favor ingresa tu clave API primero.",
+      "apiSetupError": "Error configurando el proveedor de API: {error}",
+      "generationError": "Error generando preguntas: {error}",
+      "apiKeyInvalid": "La clave API es inválida",
+      "apiKeyError": "Error validando la clave API"
+    },
+    "validation": {
+      "apiKeyValid": "La clave API es válida",
+      "apiKeyInvalid": "La clave API es inválida",
+      "usingCached": "Usando clave API almacenada en caché"
+    },
+    "placeholders": {
+      "apiKeyCached": "Usando clave API almacenada en caché...",
+      "apiKeyEnter": "Ingresa tu clave API",
+      "pdfManualInput": "La extracción del PDF falló. Por favor copia y pega tu contenido aquí manualmente..."
+    }
+  },
+  "processing": {
+    "uploading": "Procesando...",
+    "extractingPdf": "Extrayendo texto del PDF...",
+    "validatingKey": "Validando clave API...",
+    "generatingQuestions": "Generando preguntas...",
+    "exportingQti": "Exportando archivo QTI..."
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "app": {
+    "title": "QTI Generator for Canvas LMS",
+    "toolbar": {
+      "newAssessment": "New Assessment",
+      "save": "Save",
+      "exportQTI": "Export QTI"
+    }
+  },
+  "aiGeneration": {
+    "title": "AI Question Generation",
+    "uploadPdf": "Upload PDF or Enter Text:",
+    "chooseFile": "Choose PDF File",
+    "contextText": "Or Enter Text Context:",
+    "contextPlaceholder": "Enter the content/context for question generation... (If PDF upload fails, copy and paste your content here)",
+    "tip": "💡 Tip: If PDF extraction doesn't work, you can copy text from your PDF and paste it here manually.",
+    "questionCount": "Number of Questions:",
+    "difficulty": "Difficulty Level:",
+    "difficultyLevels": {
+      "easy": "Easy",
+      "medium": "Medium",
+      "hard": "Hard",
+      "mixed": "Mixed"
+    },
+    "questionTypes": "Question Types:",
+    "typeLabels": {
+      "multipleChoice": "Multiple Choice",
+      "trueFalse": "True/False",
+      "shortAnswer": "Short Answer",
+      "essay": "Essay"
+    },
+    "includeMath": "Include LaTeX math notation for mathematical content",
+    "generateBtn": "Generate Questions with AI",
+    "generating": "Generating..."
+  },
+  "assessment": {
+    "title": "Assessment Details",
+    "titleField": "Title:",
+    "titlePlaceholder": "Enter assessment title",
+    "description": "Description:",
+    "descriptionPlaceholder": "Enter assessment description",
+    "timeLimit": "Time Limit (minutes):",
+    "timeLimitPlaceholder": "0 for no limit"
+  },
+  "settings": {
+    "title": "LLM Configuration",
+    "provider": "LLM Provider:",
+    "apiKey": "API Key:",
+    "apiKeyPlaceholder": "Enter your API key",
+    "apiKeyTip": "💡 Your API key is stored securely and cached for 10 minutes"
+  },
+  "questions": {
+    "title": "Questions",
+    "questionNumber": "Question",
+    "addQuestion": "Add Question",
+    "questionType": "Question Type:",
+    "questionText": "Question Text:",
+    "questionTextPlaceholder": "Enter your question text here...",
+    "points": "Points:",
+    "choices": "Choices:",
+    "addChoice": "Add Choice",
+    "choicePlaceholder": "Choice",
+    "correctAnswer": "Correct Answer:",
+    "sampleAnswer": "Sample Answer:",
+    "gradingRubric": "Grading Rubric:",
+    "remove": "Remove",
+    "removeChoice": "×"
+  },
+  "messages": {
+    "success": {
+      "assessmentSaved": "Assessment saved successfully!",
+      "qtiExported": "QTI file exported successfully!",
+      "assessmentLoaded": "Assessment loaded successfully!",
+      "questionsGenerated": "Successfully generated {count} questions!",
+      "pdfExtracted": "✓ {filename} - Text extracted successfully!"
+    },
+    "errors": {
+      "saveError": "Error saving assessment: {error}",
+      "exportError": "Error exporting QTI: {error}",
+      "loadError": "Error loading assessment: {error}",
+      "parseError": "Error parsing assessment file",
+      "pdfError": "✗ {filename} - {error}",
+      "noContext": "Please provide context text or upload a PDF first.",
+      "noQuestionTypes": "Please select at least one question type.",
+      "noApiKey": "Please enter your API key first.",
+      "apiSetupError": "Error setting up API provider: {error}",
+      "generationError": "Error generating questions: {error}",
+      "apiKeyInvalid": "API key is invalid",
+      "apiKeyError": "Error validating API key"
+    },
+    "validation": {
+      "apiKeyValid": "API key is valid",
+      "apiKeyInvalid": "API key is invalid",
+      "usingCached": "Using cached API key"
+    },
+    "placeholders": {
+      "apiKeyCached": "Using cached API key...",
+      "apiKeyEnter": "Enter your API key",
+      "pdfManualInput": "PDF extraction failed. Please copy and paste your content here manually..."
+    }
+  },
+  "processing": {
+    "uploading": "Processing...",
+    "extractingPdf": "Extracting text from PDF...",
+    "validatingKey": "Validating API key...",
+    "generatingQuestions": "Generating questions...",
+    "exportingQti": "Exporting QTI file..."
+  }
+}

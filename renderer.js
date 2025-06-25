@@ -1,6 +1,7 @@
 const { ipcRenderer } = require('electron');
 const LLMService = require('./src/llm-service');
 const LaTeXRenderer = require('./src/latex-renderer');
+const LocalizationManager = require('./src/localization/localization');
 
 class QTIGenerator {
     constructor() {
@@ -13,12 +14,23 @@ class QTIGenerator {
         this.questionCounter = 0;
         this.llmService = new LLMService();
         this.latexRenderer = new LaTeXRenderer();
+        this.localization = new LocalizationManager();
         this.init();
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            this.llmService.destroy();
+        });
     }
 
     init() {
         this.bindEvents();
         this.setupIPCListeners();
+        
+        // Initialize localization when DOM is ready
+        setTimeout(() => {
+            this.localization.init();
+        }, 100);
     }
 
     bindEvents() {
@@ -230,9 +242,9 @@ class QTIGenerator {
         const result = await ipcRenderer.invoke('save-file', assessmentData, defaultPath);
         
         if (result.success) {
-            alert('Assessment saved successfully!');
+            this.localization.showMessage('success', 'assessmentSaved');
         } else if (!result.canceled) {
-            alert(`Error saving assessment: ${result.error}`);
+            this.localization.showMessage('errors', 'saveError', { error: result.error });
         }
     }
 
@@ -243,12 +255,12 @@ class QTIGenerator {
             try {
                 this.assessment = JSON.parse(result.data);
                 this.loadAssessmentIntoUI();
-                alert('Assessment loaded successfully!');
+                this.localization.showMessage('success', 'assessmentLoaded');
             } catch (error) {
-                alert('Error parsing assessment file');
+                this.localization.showMessage('errors', 'parseError');
             }
         } else {
-            alert(`Error loading assessment: ${result.error}`);
+            this.localization.showMessage('errors', 'loadError', { error: result.error });
         }
     }
 
@@ -308,9 +320,9 @@ class QTIGenerator {
         const result = await ipcRenderer.invoke('save-file', qtiXML, defaultPath);
         
         if (result.success) {
-            alert('QTI file exported successfully!');
+            this.localization.showMessage('success', 'qtiExported');
         } else if (!result.canceled) {
-            alert(`Error exporting QTI: ${result.error}`);
+            this.localization.showMessage('errors', 'exportError', { error: result.error });
         }
     }
 
@@ -335,7 +347,12 @@ class QTIGenerator {
       </qtimetadatafield>`;
         }
 
+        // Add Canvas-specific metadata for math support
         qti += `
+      <qtimetadatafield>
+        <fieldlabel>cc_canvas_math_rendering</fieldlabel>
+        <fieldentry>true</fieldentry>
+      </qtimetadatafield>
     </qtimetadata>
     <section ident="root_section">
       <qtimetadata>
@@ -569,7 +586,12 @@ class QTIGenerator {
         if (!file) return;
 
         const fileName = document.getElementById('fileName');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const originalText = uploadBtn.textContent;
+        
         fileName.textContent = file.name;
+        uploadBtn.textContent = this.localization.getText('processing.uploading');
+        uploadBtn.disabled = true;
 
         try {
             const arrayBuffer = await file.arrayBuffer();
@@ -577,10 +599,27 @@ class QTIGenerator {
             const extractedText = await this.llmService.extractTextFromPDF(buffer);
             
             document.getElementById('contextText').value = extractedText;
-            alert('PDF text extracted successfully!');
+            
+            // Show success message
+            const successMsg = this.localization.getText('messages.success.pdfExtracted', { filename: file.name });
+            fileName.innerHTML = `<span style="color: #27ae60;">${successMsg}</span>`;
+            
+            // Scroll to context text area
+            document.getElementById('contextText').scrollIntoView({ behavior: 'smooth' });
+            
         } catch (error) {
             console.error('PDF extraction error:', error);
-            alert(`Error extracting text from PDF: ${error.message}`);
+            
+            // Show error with helpful guidance
+            const errorMsg = this.localization.getText('messages.errors.pdfError', { filename: file.name, error: error.message });
+            fileName.innerHTML = `<span style="color: #e74c3c;">${errorMsg}</span>`;
+            
+            // Focus on the text area for manual input
+            document.getElementById('contextText').focus();
+            document.getElementById('contextText').placeholder = this.localization.getText('messages.placeholders.pdfManualInput');
+        } finally {
+            uploadBtn.textContent = originalText;
+            uploadBtn.disabled = false;
         }
     }
 
@@ -589,7 +628,7 @@ class QTIGenerator {
         const originalText = generateBtn.textContent;
         
         try {
-            generateBtn.textContent = 'Generating...';
+            generateBtn.textContent = this.localization.getText('aiGeneration.generating');
             generateBtn.disabled = true;
 
             // Get generation parameters
@@ -604,21 +643,31 @@ class QTIGenerator {
             ).map(input => input.value);
 
             if (!context) {
-                alert('Please provide context text or upload a PDF first.');
+                this.localization.showMessage('errors', 'noContext');
                 return;
             }
 
             if (questionTypes.length === 0) {
-                alert('Please select at least one question type.');
+                this.localization.showMessage('errors', 'noQuestionTypes');
                 return;
             }
 
-            // Validate API key
+            // Setup API provider and key
             const provider = document.getElementById('llmProvider').value;
             const apiKey = document.getElementById('apiKey').value.trim();
             
-            if (!apiKey) {
-                alert('Please enter your API key first.');
+            // Check for cached key if no key provided
+            const cachedKey = this.llmService.getCachedApiKey(provider);
+            if (!apiKey && !cachedKey) {
+                this.localization.showMessage('errors', 'noApiKey');
+                return;
+            }
+
+            // Set provider with API key (uses cache if no key provided)
+            try {
+                await this.llmService.setProvider(provider, apiKey);
+            } catch (error) {
+                this.localization.showMessage('errors', 'apiSetupError', { error: error.message });
                 return;
             }
 
@@ -633,11 +682,11 @@ class QTIGenerator {
             // Add generated questions to assessment
             this.addGeneratedQuestions(questions);
             
-            alert(`Successfully generated ${questions.length} questions!`);
+            this.localization.showMessage('success', 'questionsGenerated', { count: questions.length });
 
         } catch (error) {
             console.error('Question generation error:', error);
-            alert(`Error generating questions: ${error.message}`);
+            this.localization.showMessage('errors', 'generationError', { error: error.message });
         } finally {
             generateBtn.textContent = originalText;
             generateBtn.disabled = false;
@@ -645,7 +694,15 @@ class QTIGenerator {
     }
 
     addGeneratedQuestions(questions) {
-        questions.forEach(question => {
+        console.log(`Adding ${questions.length} generated questions to UI`);
+        
+        questions.forEach((question, index) => {
+            console.log(`Adding question ${index + 1}:`, {
+                type: question.type,
+                text: question.text?.substring(0, 50) + '...',
+                hasChoices: question.choices ? question.choices.length : 'N/A'
+            });
+            
             // Set the question type in the UI
             document.getElementById('questionType').value = question.type;
             
@@ -660,49 +717,97 @@ class QTIGenerator {
             this.populateQuestionData(lastQuestion, question);
         });
         
+        console.log('All questions added, updating assessment data');
         this.updateAssessmentData();
+        
+        // Refresh all math previews for generated content
+        setTimeout(() => {
+            this.refreshAllMathPreviews();
+        }, 100); // Small delay to ensure DOM is updated
+        
+        // Scroll to questions section
+        document.getElementById('questionsContainer').scrollIntoView({ behavior: 'smooth' });
     }
 
     populateQuestionData(questionElement, questionData) {
-        // Set question text
-        const questionTextArea = questionElement.querySelector('.question-text');
-        questionTextArea.value = questionData.text;
-        
-        // Set points
-        const pointsInput = questionElement.querySelector('.question-points');
-        pointsInput.value = questionData.points;
+        console.log('Populating question data:', {
+            type: questionData.type,
+            text: questionData.text?.substring(0, 50) + '...',
+            points: questionData.points,
+            choices: questionData.choices?.length,
+            correctAnswer: questionData.correctAnswer
+        });
 
-        // Handle type-specific data
-        if (questionData.type === 'multiple_choice') {
-            // Clear existing choices
-            const choicesContainer = questionElement.querySelector('.choices-container');
-            const existingChoices = choicesContainer.querySelectorAll('.choice-item');
-            existingChoices.forEach(choice => choice.remove());
-
-            // Add new choices
-            questionData.choices.forEach((choice, index) => {
-                this.addChoiceToQuestion(questionElement, choice.text, index === questionData.correctAnswer);
-            });
-
-        } else if (questionData.type === 'true_false') {
-            const correctAnswerSelect = questionElement.querySelector('.correct-answer');
-            correctAnswerSelect.value = questionData.correctAnswer;
-
-        } else if (questionData.type === 'short_answer') {
-            const sampleAnswerTextarea = questionElement.querySelector('.sample-answer');
-            if (sampleAnswerTextarea && questionData.sampleAnswer) {
-                sampleAnswerTextarea.value = questionData.sampleAnswer;
+        try {
+            // Set question text
+            const questionTextArea = questionElement.querySelector('.question-text');
+            if (questionTextArea) {
+                questionTextArea.value = questionData.text;
+                console.log('Set question text successfully');
+            } else {
+                console.error('Could not find question text area');
+            }
+            
+            // Set points
+            const pointsInput = questionElement.querySelector('.question-points');
+            if (pointsInput) {
+                pointsInput.value = questionData.points;
+                console.log('Set points successfully');
             }
 
-        } else if (questionData.type === 'essay') {
-            const gradingRubricTextarea = questionElement.querySelector('.grading-rubric');
-            if (gradingRubricTextarea && questionData.gradingRubric) {
-                gradingRubricTextarea.value = questionData.gradingRubric;
+            // Handle type-specific data
+            if (questionData.type === 'multiple_choice') {
+                console.log('Processing multiple choice question');
+                // Clear existing choices
+                const choicesContainer = questionElement.querySelector('.choices-container');
+                if (choicesContainer) {
+                    const existingChoices = choicesContainer.querySelectorAll('.choice-item');
+                    existingChoices.forEach(choice => choice.remove());
+                    console.log(`Cleared ${existingChoices.length} existing choices`);
+
+                    // Add new choices
+                    questionData.choices.forEach((choice, index) => {
+                        console.log(`Adding choice ${index}: ${choice.text}`);
+                        this.addChoiceToQuestion(questionElement, choice.text, index === questionData.correctAnswer);
+                    });
+                    console.log('Multiple choice choices added');
+                }
+
+            } else if (questionData.type === 'true_false') {
+                console.log('Processing true/false question');
+                const correctAnswerSelect = questionElement.querySelector('.correct-answer');
+                if (correctAnswerSelect) {
+                    correctAnswerSelect.value = questionData.correctAnswer;
+                    console.log('Set true/false answer');
+                }
+
+            } else if (questionData.type === 'short_answer') {
+                console.log('Processing short answer question');
+                const sampleAnswerTextarea = questionElement.querySelector('.sample-answer');
+                if (sampleAnswerTextarea && questionData.sampleAnswer) {
+                    sampleAnswerTextarea.value = questionData.sampleAnswer;
+                    console.log('Set sample answer');
+                }
+
+            } else if (questionData.type === 'essay') {
+                console.log('Processing essay question');
+                const gradingRubricTextarea = questionElement.querySelector('.grading-rubric');
+                if (gradingRubricTextarea && questionData.gradingRubric) {
+                    gradingRubricTextarea.value = questionData.gradingRubric;
+                    console.log('Set grading rubric');
+                }
             }
+
+            // Update math preview for question text
+            if (questionTextArea) {
+                this.updateMathPreview(questionTextArea);
+                console.log('Updated math preview for question text');
+            }
+            
+            console.log('Question data population complete');
+        } catch (error) {
+            console.error('Error populating question data:', error);
         }
-
-        // Update math preview
-        this.updateMathPreview(questionTextArea);
     }
 
     addChoiceToQuestion(questionElement, choiceText, isCorrect = false) {
@@ -731,6 +836,9 @@ class QTIGenerator {
             this.updateMathPreview(e.target);
             this.updateAssessmentData();
         });
+        
+        // Immediately update math preview for the new choice
+        this.updateMathPreview(choiceDiv.querySelector('.choice-text'));
     }
 
     updateMathPreview(inputElement) {
@@ -748,28 +856,56 @@ class QTIGenerator {
         this.latexRenderer.previewMath(text, previewElement);
     }
 
+    // Refresh all math previews in the document
+    refreshAllMathPreviews() {
+        const mathInputs = document.querySelectorAll('.question-text, .choice-text');
+        mathInputs.forEach(input => {
+            if (input.value && input.value.includes('$')) {
+                this.updateMathPreview(input);
+            }
+        });
+        console.log(`Refreshed math previews for ${mathInputs.length} inputs`);
+    }
+
     async validateApiKey() {
         const provider = document.getElementById('llmProvider').value;
         const apiKey = document.getElementById('apiKey').value.trim();
+        const apiKeyInput = document.getElementById('apiKey');
         
-        if (!apiKey) return;
+        // Check if there's a cached key when no key is entered
+        if (!apiKey) {
+            const cachedKey = this.llmService.getCachedApiKey(provider);
+            if (cachedKey) {
+                apiKeyInput.style.borderColor = '#f39c12'; // Orange for cached
+                apiKeyInput.title = this.localization.getText('messages.validation.usingCached');
+                apiKeyInput.placeholder = this.localization.getText('messages.placeholders.apiKeyCached');
+                return;
+            }
+            // Reset styling if no cached key
+            apiKeyInput.style.borderColor = '';
+            apiKeyInput.title = '';
+            apiKeyInput.placeholder = this.localization.getText('messages.placeholders.apiKeyEnter');
+            return;
+        }
         
         try {
             const isValid = await this.llmService.testApiKey(provider, apiKey);
-            const apiKeyInput = document.getElementById('apiKey');
             
             if (isValid) {
                 apiKeyInput.style.borderColor = '#27ae60';
-                apiKeyInput.title = 'API key is valid';
+                apiKeyInput.title = this.localization.getText('messages.validation.apiKeyValid');
+                
+                // Cache the valid API key
+                await this.llmService.setProvider(provider, apiKey);
+                console.log('API key validated and cached');
             } else {
                 apiKeyInput.style.borderColor = '#e74c3c';
-                apiKeyInput.title = 'API key is invalid';
+                apiKeyInput.title = this.localization.getText('messages.validation.apiKeyInvalid');
             }
         } catch (error) {
             console.error('API key validation error:', error);
-            const apiKeyInput = document.getElementById('apiKey');
             apiKeyInput.style.borderColor = '#e74c3c';
-            apiKeyInput.title = 'Error validating API key';
+            apiKeyInput.title = this.localization.getText('messages.errors.apiKeyError');
         }
     }
 }

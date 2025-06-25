@@ -1,0 +1,1025 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<questestinterop xmlns="http://www.imsglobal.org/xsd/ims_qtiasiv1p2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/ims_qtiasiv1p2 http://www.imsglobal.org/xsd/ims_qtiasiv1p2p1.xsd">
+  <assessment ident="g703018aadc9de40611bf558f026fcd5b" title="CL03">
+    <qtimetadata>
+      <qtimetadatafield>
+        <fieldlabel>qmd_timelimit</fieldlabel>
+        <fieldentry>10</fieldentry>
+      </qtimetadatafield>
+      <qtimetadatafield>
+        <fieldlabel>cc_maxattempts</fieldlabel>
+        <fieldentry>1</fieldentry>
+      </qtimetadatafield>
+    </qtimetadata>
+    <section ident="root_section">
+      <section ident="gf73d4e63aa55bf7d0c0261d2b23d48b3" title="Grupo">
+        <selection_ordering>
+          <selection>
+            <selection_number>1</selection_number>
+            <selection_extension>
+              <points_per_item>20.0</points_per_item>
+            </selection_extension>
+          </selection>
+        </selection_ordering>
+        <item ident="g32aa144d908cdb4ffa3f7938d9f2d5c4" title="Pregunta">
+          <itemmetadata>
+            <qtimetadata>
+              <qtimetadatafield>
+                <fieldlabel>question_type</fieldlabel>
+                <fieldentry>multiple_choice_question</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>points_possible</fieldlabel>
+                <fieldentry>1.0</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>original_answer_ids</fieldlabel>
+                <fieldentry>5385,8122,6182,3347</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>assessment_question_identifierref</fieldlabel>
+                <fieldentry>g1b830d528bd0a143bbd01cbec463080c</fieldentry>
+              </qtimetadatafield>
+            </qtimetadata>
+          </itemmetadata>
+          <presentation>
+            <material>
+              <mattext texttype="text/html">&lt;div&gt;
+&lt;p&gt;Sea  &lt;img class="equation_image" title="k\in N,\:k\ne0" src="https://aulavirtual.espol.edu.ec/equation_images/k%255Cin%2520N%252C%255C%253Ak%255Cne0" alt="LaTeX: k\in N,\:k\ne0" data-equation-content="k\in N,\:k\ne0"&gt;, entonces&lt;/p&gt;
+&lt;p&gt;&lt;img class="equation_image" style="display: block; margin-left: auto; margin-right: auto;" title="\lim_{x\to0}\frac{\sin\left(\frac{x}{2}\right)}{kx}=" src="https://aulavirtual.espol.edu.ec/equation_images/%255Clim_%257Bx%255Cto0%257D%255Cfrac%257B%255Csin%255Cleft(%255Cfrac%257Bx%257D%257B2%257D%255Cright)%257D%257Bkx%257D%253D" alt="LaTeX: \lim_{x\to0}\frac{\sin\left(\frac{x}{2}\right)}{kx}=" data-equation-content="\lim_{x\to0}\frac{\sin\left(\frac{x}{2}\right)}{kx}="&gt;&lt;/p&gt;
+&lt;/div&gt;</mattext>
+            </material>
+            <response_lid ident="response1" rcardinality="Single">
+              <render_choice>
+                <response_label ident="5385">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="\frac{k}{2}" src="https://aulavirtual.espol.edu.ec/equation_images/%255Cfrac%257Bk%257D%257B2%257D" alt="LaTeX: \frac{k}{2}" data-equation-content="\frac{k}{2}"&gt;&lt;span class="hidden-readable"&gt;&lt;/span&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="8122">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="\frac{1}{2k}" src="https://aulavirtual.espol.edu.ec/equation_images/%255Cfrac%257B1%257D%257B2k%257D" alt="LaTeX: \frac{1}{2k}" data-equation-content="\frac{1}{2k}"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="6182">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="2k" src="https://aulavirtual.espol.edu.ec/equation_images/2k" alt="LaTeX: 2k" data-equation-content="2k"&gt;&lt;span class="hidden-readable"&gt;&lt;/span&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="3347">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="\frac{2}{k}" src="https://aulavirtual.espol.edu.ec/equation_images/%255Cfrac%257B2%257D%257Bk%257D" alt="LaTeX: \frac{2}{k}" data-equation-content="\frac{2}{k}"&gt;&lt;span class="hidden-readable"&gt;&lt;/span&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+              </render_choice>
+            </response_lid>
+          </presentation>
+          <resprocessing>
+            <outcomes>
+              <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+            </outcomes>
+            <respcondition continue="No">
+              <conditionvar>
+                <varequal respident="response1">8122</varequal>
+              </conditionvar>
+              <setvar action="Set" varname="SCORE">100</setvar>
+            </respcondition>
+          </resprocessing>
+        </item>
+        <item ident="g408fc6b7062a014fcb9d956a4de92b5e" title="Pregunta">
+          <itemmetadata>
+            <qtimetadata>
+              <qtimetadatafield>
+                <fieldlabel>question_type</fieldlabel>
+                <fieldentry>multiple_choice_question</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>points_possible</fieldlabel>
+                <fieldentry>1.0</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>original_answer_ids</fieldlabel>
+                <fieldentry>6401,2108,9492,9435</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>assessment_question_identifierref</fieldlabel>
+                <fieldentry>gd80c6ae146b55ca2c66e9c838018d3db</fieldentry>
+              </qtimetadatafield>
+            </qtimetadata>
+          </itemmetadata>
+          <presentation>
+            <material>
+              <mattext texttype="text/html">&lt;div&gt;&lt;p&gt;&lt;img class="equation_image" style="display: block; margin-left: auto; margin-right: auto;" title="\lim_{x\to0}\frac{1-\cos\left(\sqrt{2}x\right)}{x^2}=" src="https://aulavirtual.espol.edu.ec/equation_images/%255Clim_%257Bx%255Cto0%257D%255Cfrac%257B1-%255Ccos%255Cleft(%255Csqrt%257B2%257Dx%255Cright)%257D%257Bx%255E2%257D%253D" alt="LaTeX: \lim_{x\to0}\frac{1-\cos\left(\sqrt{2}x\right)}{x^2}=" data-equation-content="\lim_{x\to0}\frac{1-\cos\left(\sqrt{2}x\right)}{x^2}="&gt;&lt;/p&gt;&lt;/div&gt;</mattext>
+            </material>
+            <response_lid ident="response1" rcardinality="Single">
+              <render_choice>
+                <response_label ident="6401">
+                  <material>
+                    <mattext texttype="text/plain">no existe</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="2108">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="1" src="https://aulavirtual.espol.edu.ec/equation_images/1" alt="LaTeX: 1" data-equation-content="1"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="9492">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="\frac{1}{2}" src="https://aulavirtual.espol.edu.ec/equation_images/%255Cfrac%257B1%257D%257B2%257D" alt="LaTeX: \frac{1}{2}" data-equation-content="\frac{1}{2}"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="9435">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="-\frac{1}{2}" src="https://aulavirtual.espol.edu.ec/equation_images/-%255Cfrac%257B1%257D%257B2%257D" alt="LaTeX: -\frac{1}{2}" data-equation-content="-\frac{1}{2}"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+              </render_choice>
+            </response_lid>
+          </presentation>
+          <resprocessing>
+            <outcomes>
+              <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+            </outcomes>
+            <respcondition continue="No">
+              <conditionvar>
+                <varequal respident="response1">2108</varequal>
+              </conditionvar>
+              <setvar action="Set" varname="SCORE">100</setvar>
+            </respcondition>
+          </resprocessing>
+        </item>
+        <item ident="gbc262eb4b9fcce8b3567169325d3ad0a" title="Pregunta">
+          <itemmetadata>
+            <qtimetadata>
+              <qtimetadatafield>
+                <fieldlabel>question_type</fieldlabel>
+                <fieldentry>multiple_choice_question</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>points_possible</fieldlabel>
+                <fieldentry>1.0</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>original_answer_ids</fieldlabel>
+                <fieldentry>448,6225,6242,1402</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>assessment_question_identifierref</fieldlabel>
+                <fieldentry>gb20ff8d8f43f763f458800260b5b75d2</fieldentry>
+              </qtimetadatafield>
+            </qtimetadata>
+          </itemmetadata>
+          <presentation>
+            <material>
+              <mattext texttype="text/html">&lt;div&gt;&lt;p style="text-align: center;"&gt;&lt;img class="equation_image" title="\lim_{x\to0}\frac{\text{sen}\left(\frac{x}{2}\right)}{8x}=" src="https://aulavirtual.espol.edu.ec/equation_images/%255Clim_%257Bx%255Cto0%257D%255Cfrac%257B%255Ctext%257Bsen%257D%255Cleft(%255Cfrac%257Bx%257D%257B2%257D%255Cright)%257D%257B8x%257D%253D" alt="LaTeX: \lim_{x\to0}\frac{\text{sen}\left(\frac{x}{2}\right)}{8x}=" data-equation-content="\lim_{x\to0}\frac{\text{sen}\left(\frac{x}{2}\right)}{8x}="&gt;&lt;/p&gt;&lt;/div&gt;</mattext>
+            </material>
+            <response_lid ident="response1" rcardinality="Single">
+              <render_choice>
+                <response_label ident="448">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="\frac{1}{16}" src="https://aulavirtual.espol.edu.ec/equation_images/%255Cfrac%257B1%257D%257B16%257D" alt="LaTeX: \frac{1}{16}" data-equation-content="\frac{1}{16}"&gt;&lt;span class="hidden-readable"&gt;&lt;/span&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="6225">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="\frac{1}{4}" src="https://aulavirtual.espol.edu.ec/equation_images/%255Cfrac%257B1%257D%257B4%257D" alt="LaTeX: \frac{1}{4}" data-equation-content="\frac{1}{4}"&gt;&lt;span class="hidden-readable"&gt;&lt;/span&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="6242">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="1" src="https://aulavirtual.espol.edu.ec/equation_images/1" alt="LaTeX: 1" data-equation-content="1"&gt;&lt;span class="hidden-readable"&gt;&lt;/span&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="1402">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="4" src="https://aulavirtual.espol.edu.ec/equation_images/4" alt="LaTeX: 4" data-equation-content="4"&gt;&lt;span class="hidden-readable"&gt;&lt;/span&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+              </render_choice>
+            </response_lid>
+          </presentation>
+          <resprocessing>
+            <outcomes>
+              <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+            </outcomes>
+            <respcondition continue="No">
+              <conditionvar>
+                <varequal respident="response1">448</varequal>
+              </conditionvar>
+              <setvar action="Set" varname="SCORE">100</setvar>
+            </respcondition>
+          </resprocessing>
+        </item>
+      </section>
+      <section ident="gddb49f39894c4163fbba103688fa801c" title="Grupo">
+        <selection_ordering>
+          <selection>
+            <selection_number>1</selection_number>
+            <selection_extension>
+              <points_per_item>20.0</points_per_item>
+            </selection_extension>
+          </selection>
+        </selection_ordering>
+        <item ident="ge598978fc674ec6f95c0c808073d8b4e" title="Pregunta">
+          <itemmetadata>
+            <qtimetadata>
+              <qtimetadatafield>
+                <fieldlabel>question_type</fieldlabel>
+                <fieldentry>multiple_choice_question</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>points_possible</fieldlabel>
+                <fieldentry>1.0</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>original_answer_ids</fieldlabel>
+                <fieldentry>3241,656,285,8976</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>assessment_question_identifierref</fieldlabel>
+                <fieldentry>g45a09f676b28624f6b0a0d0297782dda</fieldentry>
+              </qtimetadatafield>
+            </qtimetadata>
+          </itemmetadata>
+          <presentation>
+            <material>
+              <mattext texttype="text/html">&lt;div&gt;&lt;p style="text-align: center;"&gt;&lt;img class="equation_image" title="\lim_{x\to0}\left(1+x\right)^{\frac{1}{3x}}=" src="https://aulavirtual.espol.edu.ec/equation_images/%255Clim_%257Bx%255Cto0%257D%255Cleft(1%252Bx%255Cright)%255E%257B%255Cfrac%257B1%257D%257B3x%257D%257D%253D" alt="LaTeX: \lim_{x\to0}\left(1+x\right)^{\frac{1}{3x}}=" data-equation-content="\lim_{x\to0}\left(1+x\right)^{\frac{1}{3x}}="&gt;&lt;/p&gt;&lt;/div&gt;</mattext>
+            </material>
+            <response_lid ident="response1" rcardinality="Single">
+              <render_choice>
+                <response_label ident="3241">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="e^2" src="https://aulavirtual.espol.edu.ec/equation_images/e%255E2" alt="LaTeX: e^2" data-equation-content="e^2"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="656">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="\sqrt[3]{e}" src="https://aulavirtual.espol.edu.ec/equation_images/%255Csqrt%255B3%255D%257Be%257D" alt="LaTeX: \sqrt[3]{e}" data-equation-content="\sqrt[3]{e}"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="285">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="e^3" src="https://aulavirtual.espol.edu.ec/equation_images/e%255E3" alt="LaTeX: e^3" data-equation-content="e^3"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="8976">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="e^4" src="https://aulavirtual.espol.edu.ec/equation_images/e%255E4" alt="LaTeX: e^4" data-equation-content="e^4"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+              </render_choice>
+            </response_lid>
+          </presentation>
+          <resprocessing>
+            <outcomes>
+              <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+            </outcomes>
+            <respcondition continue="No">
+              <conditionvar>
+                <varequal respident="response1">656</varequal>
+              </conditionvar>
+              <setvar action="Set" varname="SCORE">100</setvar>
+            </respcondition>
+          </resprocessing>
+        </item>
+        <item ident="g41e5aebc3d8ca00e0ec29986ff8948fd" title="Pregunta">
+          <itemmetadata>
+            <qtimetadata>
+              <qtimetadatafield>
+                <fieldlabel>question_type</fieldlabel>
+                <fieldentry>multiple_choice_question</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>points_possible</fieldlabel>
+                <fieldentry>1.0</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>original_answer_ids</fieldlabel>
+                <fieldentry>3586,9394,8986,5011</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>assessment_question_identifierref</fieldlabel>
+                <fieldentry>g8812ef69c0d195da426aa7845cd4f4db</fieldentry>
+              </qtimetadatafield>
+            </qtimetadata>
+          </itemmetadata>
+          <presentation>
+            <material>
+              <mattext texttype="text/html">&lt;div&gt;&lt;p&gt;&lt;img class="equation_image" style="display: block; margin-left: auto; margin-right: auto;" title="\lim_{x\to0}\left(1+x\right)^{-\frac{1}{x}}" src="https://aulavirtual.espol.edu.ec/equation_images/%255Clim_%257Bx%255Cto0%257D%255Cleft(1%252Bx%255Cright)%255E%257B-%255Cfrac%257B1%257D%257Bx%257D%257D" alt="LaTeX: \lim_{x\to0}\left(1+x\right)^{-\frac{1}{x}}" data-equation-content="\lim_{x\to0}\left(1+x\right)^{-\frac{1}{x}}"&gt;&lt;/p&gt;&lt;/div&gt;</mattext>
+            </material>
+            <response_lid ident="response1" rcardinality="Single">
+              <render_choice>
+                <response_label ident="3586">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="\frac{1}{2}" src="https://aulavirtual.espol.edu.ec/equation_images/%255Cfrac%257B1%257D%257B2%257D" alt="LaTeX: \frac{1}{2}" data-equation-content="\frac{1}{2}"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="9394">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="\frac{1}{e}" src="https://aulavirtual.espol.edu.ec/equation_images/%255Cfrac%257B1%257D%257Be%257D" alt="LaTeX: \frac{1}{e}" data-equation-content="\frac{1}{e}"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="8986">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="e" src="https://aulavirtual.espol.edu.ec/equation_images/e" alt="LaTeX: e" data-equation-content="e"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="5011">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="e^2" src="https://aulavirtual.espol.edu.ec/equation_images/e%255E2" alt="LaTeX: e^2" data-equation-content="e^2"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+              </render_choice>
+            </response_lid>
+          </presentation>
+          <resprocessing>
+            <outcomes>
+              <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+            </outcomes>
+            <respcondition continue="No">
+              <conditionvar>
+                <varequal respident="response1">9394</varequal>
+              </conditionvar>
+              <setvar action="Set" varname="SCORE">100</setvar>
+            </respcondition>
+          </resprocessing>
+        </item>
+        <item ident="g639a7d4f100aae173324d8bff411fbeb" title="Pregunta">
+          <itemmetadata>
+            <qtimetadata>
+              <qtimetadatafield>
+                <fieldlabel>question_type</fieldlabel>
+                <fieldentry>multiple_choice_question</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>points_possible</fieldlabel>
+                <fieldentry>1.0</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>original_answer_ids</fieldlabel>
+                <fieldentry>3696,6150,3595,3915</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>assessment_question_identifierref</fieldlabel>
+                <fieldentry>g0923db7d5959dc5342de4e7f86e8e6b3</fieldentry>
+              </qtimetadatafield>
+            </qtimetadata>
+          </itemmetadata>
+          <presentation>
+            <material>
+              <mattext texttype="text/html">&lt;div&gt;&lt;p&gt;&lt;img class="equation_image" style="display: block; margin-left: auto; margin-right: auto;" title="\lim_{x\to0}\frac{e^{2x}-2e^x+1}{x^2}=" src="https://aulavirtual.espol.edu.ec/equation_images/%255Clim_%257Bx%255Cto0%257D%255Cfrac%257Be%255E%257B2x%257D-2e%255Ex%252B1%257D%257Bx%255E2%257D%253D" alt="LaTeX: \lim_{x\to0}\frac{e^{2x}-2e^x+1}{x^2}=" data-equation-content="\lim_{x\to0}\frac{e^{2x}-2e^x+1}{x^2}="&gt;&lt;/p&gt;&lt;/div&gt;</mattext>
+            </material>
+            <response_lid ident="response1" rcardinality="Single">
+              <render_choice>
+                <response_label ident="3696">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="\ln\left(3\right)" src="https://aulavirtual.espol.edu.ec/equation_images/%255Cln%255Cleft(3%255Cright)" alt="LaTeX: \ln\left(3\right)" data-equation-content="\ln\left(3\right)"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="6150">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="-1" src="https://aulavirtual.espol.edu.ec/equation_images/-1" alt="LaTeX: -1" data-equation-content="-1"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="3595">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="2" src="https://aulavirtual.espol.edu.ec/equation_images/2" alt="LaTeX: 2" data-equation-content="2"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="3915">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="1" src="https://aulavirtual.espol.edu.ec/equation_images/1" alt="LaTeX: 1" data-equation-content="1"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+              </render_choice>
+            </response_lid>
+          </presentation>
+          <resprocessing>
+            <outcomes>
+              <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+            </outcomes>
+            <respcondition continue="No">
+              <conditionvar>
+                <varequal respident="response1">3696</varequal>
+              </conditionvar>
+              <setvar action="Set" varname="SCORE">100</setvar>
+            </respcondition>
+          </resprocessing>
+        </item>
+      </section>
+      <section ident="g2a86e5d0530b88ecad96d29c55ab2ccf" title="Grupo">
+        <selection_ordering>
+          <selection>
+            <selection_number>1</selection_number>
+            <selection_extension>
+              <points_per_item>20.0</points_per_item>
+            </selection_extension>
+          </selection>
+        </selection_ordering>
+        <item ident="g658ecc7f357d2cd7c34080cd46317e71" title="Pregunta">
+          <itemmetadata>
+            <qtimetadata>
+              <qtimetadatafield>
+                <fieldlabel>question_type</fieldlabel>
+                <fieldentry>multiple_choice_question</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>points_possible</fieldlabel>
+                <fieldentry>1.0</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>original_answer_ids</fieldlabel>
+                <fieldentry>5288,9292,1021,6257</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>assessment_question_identifierref</fieldlabel>
+                <fieldentry>gfb1b0afb49a304a9a583f728d19731e8</fieldentry>
+              </qtimetadatafield>
+            </qtimetadata>
+          </itemmetadata>
+          <presentation>
+            <material>
+              <mattext texttype="text/html">&lt;div&gt;&lt;p style="text-align: center;"&gt;&lt;img class="equation_image" title="\lim_{x\to0}\frac{x}{e^{3x}-1}=" src="https://aulavirtual.espol.edu.ec/equation_images/%255Clim_%257Bx%255Cto0%257D%255Cfrac%257Bx%257D%257Be%255E%257B3x%257D-1%257D%253D" alt="LaTeX: \lim_{x\to0}\frac{x}{e^{3x}-1}=" data-equation-content="\lim_{x\to0}\frac{x}{e^{3x}-1}="&gt;&lt;/p&gt;&lt;/div&gt;</mattext>
+            </material>
+            <response_lid ident="response1" rcardinality="Single">
+              <render_choice>
+                <response_label ident="5288">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="\ln\left(3\right)" src="https://aulavirtual.espol.edu.ec/equation_images/%255Cln%255Cleft(3%255Cright)" alt="LaTeX: \ln\left(3\right)" data-equation-content="\ln\left(3\right)"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="9292">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="1" src="https://aulavirtual.espol.edu.ec/equation_images/1" alt="LaTeX: 1" data-equation-content="1"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="1021">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="3" src="https://aulavirtual.espol.edu.ec/equation_images/3" alt="LaTeX: 3" data-equation-content="3"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="6257">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="\frac{1}{3}" src="https://aulavirtual.espol.edu.ec/equation_images/%255Cfrac%257B1%257D%257B3%257D" alt="LaTeX: \frac{1}{3}" data-equation-content="\frac{1}{3}"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+              </render_choice>
+            </response_lid>
+          </presentation>
+          <resprocessing>
+            <outcomes>
+              <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+            </outcomes>
+            <respcondition continue="No">
+              <conditionvar>
+                <varequal respident="response1">6257</varequal>
+              </conditionvar>
+              <setvar action="Set" varname="SCORE">100</setvar>
+            </respcondition>
+          </resprocessing>
+        </item>
+        <item ident="gec8138f12af1b545a354a872a46c5b0d" title="Pregunta">
+          <itemmetadata>
+            <qtimetadata>
+              <qtimetadatafield>
+                <fieldlabel>question_type</fieldlabel>
+                <fieldentry>multiple_choice_question</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>points_possible</fieldlabel>
+                <fieldentry>1.0</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>original_answer_ids</fieldlabel>
+                <fieldentry>7123,2753,4925,6631</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>assessment_question_identifierref</fieldlabel>
+                <fieldentry>ge8617138b8f4c35a27697e1e5f93b28f</fieldentry>
+              </qtimetadatafield>
+            </qtimetadata>
+          </itemmetadata>
+          <presentation>
+            <material>
+              <mattext texttype="text/html">&lt;div&gt;&lt;p&gt;&lt;img class="equation_image" style="display: block; margin-left: auto; margin-right: auto;" title="\lim_{a\to0}\frac{1-e^{-2a}}{a}=" src="https://aulavirtual.espol.edu.ec/equation_images/%255Clim_%257Ba%255Cto0%257D%255Cfrac%257B1-e%255E%257B-2a%257D%257D%257Ba%257D%253D" alt="LaTeX: \lim_{a\to0}\frac{1-e^{-2a}}{a}=" data-equation-content="\lim_{a\to0}\frac{1-e^{-2a}}{a}="&gt;&lt;/p&gt;&lt;/div&gt;</mattext>
+            </material>
+            <response_lid ident="response1" rcardinality="Single">
+              <render_choice>
+                <response_label ident="7123">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="-2" src="https://aulavirtual.espol.edu.ec/equation_images/-2" alt="LaTeX: -2" data-equation-content="-2"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="2753">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="0" src="https://aulavirtual.espol.edu.ec/equation_images/0" alt="LaTeX: 0" data-equation-content="0"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="4925">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="2" src="https://aulavirtual.espol.edu.ec/equation_images/2" alt="LaTeX: 2" data-equation-content="2"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="6631">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;No existe&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+              </render_choice>
+            </response_lid>
+          </presentation>
+          <resprocessing>
+            <outcomes>
+              <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+            </outcomes>
+            <respcondition continue="No">
+              <conditionvar>
+                <varequal respident="response1">4925</varequal>
+              </conditionvar>
+              <setvar action="Set" varname="SCORE">100</setvar>
+            </respcondition>
+          </resprocessing>
+        </item>
+        <item ident="ga3f723e5d8b77c509e3301cead4e8af0" title="Pregunta">
+          <itemmetadata>
+            <qtimetadata>
+              <qtimetadatafield>
+                <fieldlabel>question_type</fieldlabel>
+                <fieldentry>multiple_choice_question</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>points_possible</fieldlabel>
+                <fieldentry>1.0</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>original_answer_ids</fieldlabel>
+                <fieldentry>168,6660,6700,9516</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>assessment_question_identifierref</fieldlabel>
+                <fieldentry>g84fe0150f45e9ab2ba17d6bbd7f210f7</fieldentry>
+              </qtimetadatafield>
+            </qtimetadata>
+          </itemmetadata>
+          <presentation>
+            <material>
+              <mattext texttype="text/html">&lt;div&gt;
+&lt;p&gt;Sea la función de variable real definida por:&lt;/p&gt;
+&lt;p&gt;&lt;br&gt;&lt;img class="equation_image" style="display: block; margin-left: auto; margin-right: auto;" title="f(x) =
+\begin{cases}
+\frac{2x}{|x|}, &amp;amp; \text{si } x \ne 0 \\
+2, &amp;amp; \text{si } x = 0
+\end{cases}" src="https://aulavirtual.espol.edu.ec/equation_images/f(x)%2520%253D%250A%255Cbegin%257Bcases%257D%250A%255Cfrac%257B2x%257D%257B%257Cx%257C%257D%252C%2520%2526%2520%255Ctext%257Bsi%2520%257D%2520x%2520%255Cne%25200%2520%255C%255C%250A2%252C%2520%2526%2520%255Ctext%257Bsi%2520%257D%2520x%2520%253D%25200%250A%255Cend%257Bcases%257D" alt="LaTeX: f(x) =
+\begin{cases}
+\frac{2x}{|x|}, &amp;amp; \text{si } x \ne 0 \\
+2, &amp;amp; \text{si } x = 0
+\end{cases}" data-equation-content="f(x) =
+\begin{cases}
+\frac{2x}{|x|}, &amp;amp; \text{si } x \ne 0 \\
+2, &amp;amp; \text{si } x = 0
+\end{cases}"&gt;&lt;/p&gt;
+&lt;p&gt;entonces&lt;/p&gt;
+&lt;p&gt;&lt;img class="equation_image" style="display: block; margin-left: auto; margin-right: auto;" title="\lim_{x \to 0^-} f(x) =" src="https://aulavirtual.espol.edu.ec/equation_images/%255Clim_%257Bx%2520%255Cto%25200%255E-%257D%2520f(x)%2520%253D" alt="LaTeX: \lim_{x \to 0^-} f(x) =" data-equation-content="\lim_{x \to 0^-} f(x) ="&gt;&lt;/p&gt;
+&lt;/div&gt;</mattext>
+            </material>
+            <response_lid ident="response1" rcardinality="Single">
+              <render_choice>
+                <response_label ident="168">
+                  <material>
+                    <mattext texttype="text/plain">no existe</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="6660">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="2" src="https://aulavirtual.espol.edu.ec/equation_images/2" alt="LaTeX: 2" data-equation-content="2"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="6700">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="1" src="https://aulavirtual.espol.edu.ec/equation_images/1" alt="LaTeX: 1" data-equation-content="1"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="9516">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="-2" src="https://aulavirtual.espol.edu.ec/equation_images/-2" alt="LaTeX: -2" data-equation-content="-2"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+              </render_choice>
+            </response_lid>
+          </presentation>
+          <resprocessing>
+            <outcomes>
+              <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+            </outcomes>
+            <respcondition continue="No">
+              <conditionvar>
+                <varequal respident="response1">9516</varequal>
+              </conditionvar>
+              <setvar action="Set" varname="SCORE">100</setvar>
+            </respcondition>
+          </resprocessing>
+        </item>
+      </section>
+      <section ident="g6d8bef95a39b349a13d4590d545804c8" title="Grupo">
+        <selection_ordering>
+          <selection>
+            <selection_number>1</selection_number>
+            <selection_extension>
+              <points_per_item>20.0</points_per_item>
+            </selection_extension>
+          </selection>
+        </selection_ordering>
+        <item ident="g35c915d519f7ac743e17c5111a50463a" title="Pregunta">
+          <itemmetadata>
+            <qtimetadata>
+              <qtimetadatafield>
+                <fieldlabel>question_type</fieldlabel>
+                <fieldentry>multiple_choice_question</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>points_possible</fieldlabel>
+                <fieldentry>1.0</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>original_answer_ids</fieldlabel>
+                <fieldentry>7489,5980,5704,3809</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>assessment_question_identifierref</fieldlabel>
+                <fieldentry>g171652bd8017ae4e7074ae3128f22328</fieldentry>
+              </qtimetadatafield>
+            </qtimetadata>
+          </itemmetadata>
+          <presentation>
+            <material>
+              <mattext texttype="text/html">&lt;div&gt;&lt;p style="text-align: center;"&gt;&lt;img class="equation_image" title="\lim_{x\to3}\frac{x^3-27}{x-3}=" src="https://aulavirtual.espol.edu.ec/equation_images/%255Clim_%257Bx%255Cto3%257D%255Cfrac%257Bx%255E3-27%257D%257Bx-3%257D%253D" alt="LaTeX: \lim_{x\to3}\frac{x^3-27}{x-3}=" data-equation-content="\lim_{x\to3}\frac{x^3-27}{x-3}="&gt;&lt;/p&gt;&lt;/div&gt;</mattext>
+            </material>
+            <response_lid ident="response1" rcardinality="Single">
+              <render_choice>
+                <response_label ident="7489">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="1" src="https://aulavirtual.espol.edu.ec/equation_images/1" alt="LaTeX: 1" data-equation-content="1"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="5980">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="3" src="https://aulavirtual.espol.edu.ec/equation_images/3" alt="LaTeX: 3" data-equation-content="3"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="5704">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;9&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="3809">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="27" src="https://aulavirtual.espol.edu.ec/equation_images/27" alt="LaTeX: 27" data-equation-content="27"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+              </render_choice>
+            </response_lid>
+          </presentation>
+          <resprocessing>
+            <outcomes>
+              <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+            </outcomes>
+            <respcondition continue="No">
+              <conditionvar>
+                <varequal respident="response1">3809</varequal>
+              </conditionvar>
+              <setvar action="Set" varname="SCORE">100</setvar>
+            </respcondition>
+          </resprocessing>
+        </item>
+        <item ident="g31ec380f81134cb68272398261938585" title="Pregunta">
+          <itemmetadata>
+            <qtimetadata>
+              <qtimetadatafield>
+                <fieldlabel>question_type</fieldlabel>
+                <fieldentry>multiple_choice_question</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>points_possible</fieldlabel>
+                <fieldentry>1.0</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>original_answer_ids</fieldlabel>
+                <fieldentry>5974,2779,6943,4982</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>assessment_question_identifierref</fieldlabel>
+                <fieldentry>g43a3e376769928ce893c69b450136b11</fieldentry>
+              </qtimetadatafield>
+            </qtimetadata>
+          </itemmetadata>
+          <presentation>
+            <material>
+              <mattext texttype="text/html">&lt;div&gt;&lt;p&gt;&lt;img class="equation_image" style="display: block; margin-left: auto; margin-right: auto;" title="\lim_{x\to8}\frac{x^2-x-56}{x-8}=" src="https://aulavirtual.espol.edu.ec/equation_images/%255Clim_%257Bx%255Cto8%257D%255Cfrac%257Bx%255E2-x-56%257D%257Bx-8%257D%253D" alt="LaTeX: \lim_{x\to8}\frac{x^2-x-56}{x-8}=" data-equation-content="\lim_{x\to8}\frac{x^2-x-56}{x-8}="&gt;&lt;/p&gt;&lt;/div&gt;</mattext>
+            </material>
+            <response_lid ident="response1" rcardinality="Single">
+              <render_choice>
+                <response_label ident="5974">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="1" src="https://aulavirtual.espol.edu.ec/equation_images/1" alt="LaTeX: 1" data-equation-content="1"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="2779">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="7" src="https://aulavirtual.espol.edu.ec/equation_images/7" alt="LaTeX: 7" data-equation-content="7"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="6943">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="8" src="https://aulavirtual.espol.edu.ec/equation_images/8" alt="LaTeX: 8" data-equation-content="8"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="4982">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="15" src="https://aulavirtual.espol.edu.ec/equation_images/15" alt="LaTeX: 15" data-equation-content="15"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+              </render_choice>
+            </response_lid>
+          </presentation>
+          <resprocessing>
+            <outcomes>
+              <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+            </outcomes>
+            <respcondition continue="No">
+              <conditionvar>
+                <varequal respident="response1">4982</varequal>
+              </conditionvar>
+              <setvar action="Set" varname="SCORE">100</setvar>
+            </respcondition>
+          </resprocessing>
+        </item>
+        <item ident="g2539070e7bd91f2f13e226c56d1b777b" title="Pregunta">
+          <itemmetadata>
+            <qtimetadata>
+              <qtimetadatafield>
+                <fieldlabel>question_type</fieldlabel>
+                <fieldentry>multiple_choice_question</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>points_possible</fieldlabel>
+                <fieldentry>1.0</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>original_answer_ids</fieldlabel>
+                <fieldentry>339,1521,7723,2526</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>assessment_question_identifierref</fieldlabel>
+                <fieldentry>g2c9af92e43a2ab011c29d886f753172a</fieldentry>
+              </qtimetadatafield>
+            </qtimetadata>
+          </itemmetadata>
+          <presentation>
+            <material>
+              <mattext texttype="text/html">&lt;div&gt;
+&lt;p&gt;Se concluye que:&lt;/p&gt;
+&lt;p&gt;&lt;img class="equation_image" style="display: block; margin-left: auto; margin-right: auto;" title="\lim_{x \to 2} \frac{x^2 - 4}{x - 2} = 4" src="https://aulavirtual.espol.edu.ec/equation_images/%255Clim_%257Bx%2520%255Cto%25202%257D%2520%255Cfrac%257Bx%255E2%2520-%25204%257D%257Bx%2520-%25202%257D%2520%253D%25204" alt="LaTeX: \lim_{x \to 2} \frac{x^2 - 4}{x - 2} = 4" data-equation-content="\lim_{x \to 2} \frac{x^2 - 4}{x - 2} = 4"&gt;dado que :&lt;/p&gt;
+&lt;p&gt; &lt;/p&gt;
+&lt;/div&gt;</mattext>
+            </material>
+            <response_lid ident="response1" rcardinality="Single">
+              <render_choice>
+                <response_label ident="339">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="\frac{x^2 - 4}{x - 2} = x + 2, \quad \forall x \in \mathbb{R}" src="https://aulavirtual.espol.edu.ec/equation_images/%255Cfrac%257Bx%255E2%2520-%25204%257D%257Bx%2520-%25202%257D%2520%253D%2520x%2520%252B%25202%252C%2520%255Cquad%2520%255Cforall%2520x%2520%255Cin%2520%255Cmathbb%257BR%257D" alt="LaTeX: \frac{x^2 - 4}{x - 2} = x + 2, \quad \forall x \in \mathbb{R}" data-equation-content="\frac{x^2 - 4}{x - 2} = x + 2, \quad \forall x \in \mathbb{R}"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="1521">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="\frac{x^2 - 4}{x - 2} = x + 2, x\ne 2" src="https://aulavirtual.espol.edu.ec/equation_images/%255Cfrac%257Bx%255E2%2520-%25204%257D%257Bx%2520-%25202%257D%2520%253D%2520x%2520%252B%25202%252C%2520x%255Cne%25202" alt="LaTeX: \frac{x^2 - 4}{x - 2} = x + 2, x\ne 2" data-equation-content="\frac{x^2 - 4}{x - 2} = x + 2, x\ne 2"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="7723">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="\frac{x^2 - 4}{x - 2} = x + 2, x\ne  - 2" src="https://aulavirtual.espol.edu.ec/equation_images/%255Cfrac%257Bx%255E2%2520-%25204%257D%257Bx%2520-%25202%257D%2520%253D%2520x%2520%252B%25202%252C%2520x%255Cne%2520%2520-%25202" alt="LaTeX: \frac{x^2 - 4}{x - 2} = x + 2, x\ne  - 2" data-equation-content="\frac{x^2 - 4}{x - 2} = x + 2, x\ne  - 2"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="2526">
+                  <material>
+                    <mattext texttype="text/plain">El resultado del límite es incorrecto</mattext>
+                  </material>
+                </response_label>
+              </render_choice>
+            </response_lid>
+          </presentation>
+          <resprocessing>
+            <outcomes>
+              <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+            </outcomes>
+            <respcondition continue="No">
+              <conditionvar>
+                <varequal respident="response1">1521</varequal>
+              </conditionvar>
+              <setvar action="Set" varname="SCORE">100</setvar>
+            </respcondition>
+          </resprocessing>
+        </item>
+      </section>
+      <section ident="g51c7dfa58205148f73e862a3f9bd3187" title="Grupo">
+        <selection_ordering>
+          <selection>
+            <selection_number>1</selection_number>
+            <selection_extension>
+              <points_per_item>20.0</points_per_item>
+            </selection_extension>
+          </selection>
+        </selection_ordering>
+        <item ident="g2277b81bc22d9b4b90758cac84452e2c" title="Pregunta">
+          <itemmetadata>
+            <qtimetadata>
+              <qtimetadatafield>
+                <fieldlabel>question_type</fieldlabel>
+                <fieldentry>multiple_choice_question</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>points_possible</fieldlabel>
+                <fieldentry>1.0</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>original_answer_ids</fieldlabel>
+                <fieldentry>9324,9838,9844,8427</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>assessment_question_identifierref</fieldlabel>
+                <fieldentry>g332455b77262ad48bfd352375ca10147</fieldentry>
+              </qtimetadatafield>
+            </qtimetadata>
+          </itemmetadata>
+          <presentation>
+            <material>
+              <mattext texttype="text/html">&lt;div&gt;&lt;p&gt;&lt;img class="equation_image" style="display: block; margin-left: auto; margin-right: auto;" title="\frac{\tan(-7x)}{x}= " src="https://aulavirtual.espol.edu.ec/equation_images/%255Cfrac%257B%255Ctan(-7x)%257D%257Bx%257D%253D%2520" alt="LaTeX: \frac{\tan(-7x)}{x}= " data-equation-content="\frac{\tan(-7x)}{x}= "&gt;&lt;/p&gt;&lt;/div&gt;</mattext>
+            </material>
+            <response_lid ident="response1" rcardinality="Single">
+              <render_choice>
+                <response_label ident="9324">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="- 1" src="https://aulavirtual.espol.edu.ec/equation_images/-%25201" alt="LaTeX: - 1" data-equation-content="- 1"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="9838">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="- \frac{1}{7} " src="https://aulavirtual.espol.edu.ec/equation_images/-%2520%255Cfrac%257B1%257D%257B7%257D%2520" alt="LaTeX: - \frac{1}{7} " data-equation-content="- \frac{1}{7} "&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="9844">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="- 7" src="https://aulavirtual.espol.edu.ec/equation_images/-%25207" alt="LaTeX: - 7" data-equation-content="- 7"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="8427">
+                  <material>
+                    <mattext texttype="text/plain">No existe</mattext>
+                  </material>
+                </response_label>
+              </render_choice>
+            </response_lid>
+          </presentation>
+          <resprocessing>
+            <outcomes>
+              <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+            </outcomes>
+            <respcondition continue="No">
+              <conditionvar>
+                <varequal respident="response1">9844</varequal>
+              </conditionvar>
+              <setvar action="Set" varname="SCORE">100</setvar>
+            </respcondition>
+          </resprocessing>
+        </item>
+        <item ident="g30f5907508e4b295f640f2b8dea01b4d" title="Pregunta">
+          <itemmetadata>
+            <qtimetadata>
+              <qtimetadatafield>
+                <fieldlabel>question_type</fieldlabel>
+                <fieldentry>multiple_choice_question</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>points_possible</fieldlabel>
+                <fieldentry>1.0</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>original_answer_ids</fieldlabel>
+                <fieldentry>3104,9323,8769,2270</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>assessment_question_identifierref</fieldlabel>
+                <fieldentry>g8c9426c7923319954c2d0ee6d39610f6</fieldentry>
+              </qtimetadatafield>
+            </qtimetadata>
+          </itemmetadata>
+          <presentation>
+            <material>
+              <mattext texttype="text/html">&lt;div&gt;&lt;p&gt;&lt;img class="equation_image" style="display: block; margin-left: auto; margin-right: auto;" title="\frac{1 - \cos(3x)}{x}= " src="https://aulavirtual.espol.edu.ec/equation_images/%255Cfrac%257B1%2520-%2520%255Ccos(3x)%257D%257Bx%257D%253D%2520" alt="LaTeX: \frac{1 - \cos(3x)}{x}= " data-equation-content="\frac{1 - \cos(3x)}{x}= "&gt;&lt;/p&gt;&lt;/div&gt;</mattext>
+            </material>
+            <response_lid ident="response1" rcardinality="Single">
+              <render_choice>
+                <response_label ident="3104">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="0" src="https://aulavirtual.espol.edu.ec/equation_images/0" alt="LaTeX: 0" data-equation-content="0"&gt;&lt;span class="hidden-readable"&gt;&lt;/span&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="9323">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="3" src="https://aulavirtual.espol.edu.ec/equation_images/3" alt="LaTeX: 3" data-equation-content="3"&gt;&lt;span class="hidden-readable"&gt;&lt;/span&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="8769">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="\frac{1}{2} " src="https://aulavirtual.espol.edu.ec/equation_images/%255Cfrac%257B1%257D%257B2%257D%2520" alt="LaTeX: \frac{1}{2} " data-equation-content="\frac{1}{2} "&gt;&lt;span class="hidden-readable"&gt;&lt;/span&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="2270">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="\frac{9}{2} " src="https://aulavirtual.espol.edu.ec/equation_images/%255Cfrac%257B9%257D%257B2%257D%2520" alt="LaTeX: \frac{9}{2} " data-equation-content="\frac{9}{2} "&gt;&lt;span class="hidden-readable"&gt;&lt;/span&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+              </render_choice>
+            </response_lid>
+          </presentation>
+          <resprocessing>
+            <outcomes>
+              <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+            </outcomes>
+            <respcondition continue="No">
+              <conditionvar>
+                <varequal respident="response1">3104</varequal>
+              </conditionvar>
+              <setvar action="Set" varname="SCORE">100</setvar>
+            </respcondition>
+          </resprocessing>
+        </item>
+        <item ident="gb874d3bd89d0a665436f3ea810905cca" title="Pregunta">
+          <itemmetadata>
+            <qtimetadata>
+              <qtimetadatafield>
+                <fieldlabel>question_type</fieldlabel>
+                <fieldentry>multiple_choice_question</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>points_possible</fieldlabel>
+                <fieldentry>1.0</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>original_answer_ids</fieldlabel>
+                <fieldentry>3991,147,261,3725</fieldentry>
+              </qtimetadatafield>
+              <qtimetadatafield>
+                <fieldlabel>assessment_question_identifierref</fieldlabel>
+                <fieldentry>ge5e9cdeaa7c58670954e1176fba4fbf7</fieldentry>
+              </qtimetadatafield>
+            </qtimetadata>
+          </itemmetadata>
+          <presentation>
+            <material>
+              <mattext texttype="text/html">&lt;div&gt;
+&lt;p&gt;El valor del límite:&lt;/p&gt;
+&lt;p&gt;&lt;img class="equation_image" style="display: block; margin-left: auto; margin-right: auto;" title="\lim_{x \to 0} \frac{1 - \cos^2(x)}{x^2}= " src="https://aulavirtual.espol.edu.ec/equation_images/%255Clim_%257Bx%2520%255Cto%25200%257D%2520%255Cfrac%257B1%2520-%2520%255Ccos%255E2(x)%257D%257Bx%255E2%257D%253D%2520" alt="LaTeX: \lim_{x \to 0} \frac{1 - \cos^2(x)}{x^2}= " data-equation-content="\lim_{x \to 0} \frac{1 - \cos^2(x)}{x^2}= "&gt;&lt;/p&gt;
+&lt;p&gt;pertenece al intervalo:&lt;/p&gt;
+&lt;/div&gt;</mattext>
+            </material>
+            <response_lid ident="response1" rcardinality="Single">
+              <render_choice>
+                <response_label ident="3991">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="\bigl[\,0, \tfrac{1}{2}\bigr)" src="https://aulavirtual.espol.edu.ec/equation_images/%255Cbigl%255B%255C%252C0%252C%2520%255Ctfrac%257B1%257D%257B2%257D%255Cbigr)" alt="LaTeX: \bigl[\,0, \tfrac{1}{2}\bigr)" data-equation-content="\bigl[\,0, \tfrac{1}{2}\bigr)"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="147">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="\left[ \tfrac{1}{2}, 1 \right)" src="https://aulavirtual.espol.edu.ec/equation_images/%255Cleft%255B%2520%255Ctfrac%257B1%257D%257B2%257D%252C%25201%2520%255Cright)" alt="LaTeX: \left[ \tfrac{1}{2}, 1 \right)" data-equation-content="\left[ \tfrac{1}{2}, 1 \right)"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="261">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="\bigl[\,1, \tfrac{3}{2}\bigr)" src="https://aulavirtual.espol.edu.ec/equation_images/%255Cbigl%255B%255C%252C1%252C%2520%255Ctfrac%257B3%257D%257B2%257D%255Cbigr)" alt="LaTeX: \bigl[\,1, \tfrac{3}{2}\bigr)" data-equation-content="\bigl[\,1, \tfrac{3}{2}\bigr)"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+                <response_label ident="3725">
+                  <material>
+                    <mattext texttype="text/html">&lt;p&gt;&lt;img class="equation_image" title="\left[ \tfrac{3}{2}, 2 \right)" src="https://aulavirtual.espol.edu.ec/equation_images/%255Cleft%255B%2520%255Ctfrac%257B3%257D%257B2%257D%252C%25202%2520%255Cright)" alt="LaTeX: \left[ \tfrac{3}{2}, 2 \right)" data-equation-content="\left[ \tfrac{3}{2}, 2 \right)"&gt;&lt;/p&gt;</mattext>
+                  </material>
+                </response_label>
+              </render_choice>
+            </response_lid>
+          </presentation>
+          <resprocessing>
+            <outcomes>
+              <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+            </outcomes>
+            <respcondition continue="No">
+              <conditionvar>
+                <varequal respident="response1">261</varequal>
+              </conditionvar>
+              <setvar action="Set" varname="SCORE">100</setvar>
+            </respcondition>
+          </resprocessing>
+        </item>
+      </section>
+    </section>
+  </assessment>
+</questestinterop>
