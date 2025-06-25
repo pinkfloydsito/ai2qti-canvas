@@ -7,18 +7,39 @@ class PDFExtractor {
 
     setupPDFJS() {
         try {
-            // Configure PDFJS to work without external workers in Electron
-            const pdfjs = require('pdfjs-dist');
+            // Use the legacy build for better Electron compatibility
+            const pdfjs = require('pdfjs-dist/legacy/build/pdf');
             
-            // Disable worker to avoid "workerSrc" issues in Electron
-            pdfjs.GlobalWorkerOptions.workerSrc = null;
+            // Set up worker using the proper method from the GitHub issue
+            try {
+                const PDFJSWorker = require('pdfjs-dist/legacy/build/pdf.worker.entry');
+                pdfjs.GlobalWorkerOptions.workerSrc = PDFJSWorker;
+                console.log('PDF.js worker configured successfully for Electron');
+            } catch (workerError) {
+                // Fallback: Disable workers completely if worker setup fails
+                console.warn('Worker setup failed, disabling workers:', workerError.message);
+                pdfjs.GlobalWorkerOptions.workerSrc = false;
+                pdfjs.GlobalWorkerOptions.workerPort = null;
+                
+                // Additional fallbacks for older versions
+                if (typeof global !== 'undefined') {
+                    global.PDFJS = global.PDFJS || {};
+                    global.PDFJS.workerSrc = false;
+                    global.PDFJS.disableWorker = true;
+                }
+            }
             
-            // Use the legacy build that doesn't require workers
             this.pdfjs = pdfjs;
-            
             console.log('PDF.js configured for Electron environment');
         } catch (error) {
             console.warn('PDF.js setup warning:', error.message);
+            // Fallback to regular pdfjs-dist if legacy fails
+            try {
+                this.pdfjs = require('pdfjs-dist');
+                this.pdfjs.GlobalWorkerOptions.workerSrc = false;
+            } catch (fallbackError) {
+                console.warn('PDF.js fallback also failed:', fallbackError.message);
+            }
         }
     }
 
@@ -44,6 +65,50 @@ class PDFExtractor {
         return true;
     }
 
+    // Electron-optimized PDF parsing using the GitHub issue solution
+    async electronOptimizedParse(pdfBuffer) {
+        try {
+            console.log('Attempting Electron-optimized PDF extraction...');
+            
+            // Apply the GitHub issue fix for pdf-parse
+            const parseOptions = {
+                normalizeWhitespace: true,
+                disableCombineTextItems: false,
+                max: 0, // No page limit
+                version: 'v1.10.100', // Use older version
+            };
+            
+            // Set up the worker properly as suggested in the GitHub issue
+            try {
+                const pdfjs = require('pdfjs-dist/legacy/build/pdf');
+                const PDFJSWorker = require('pdfjs-dist/legacy/build/pdf.worker.entry');
+                pdfjs.GlobalWorkerOptions.workerSrc = PDFJSWorker;
+            } catch (workerSetupError) {
+                // If worker setup fails, disable workers
+                console.warn('Worker setup failed in electron parse, disabling workers');
+                if (typeof global !== 'undefined') {
+                    global.PDFJS = global.PDFJS || {};
+                    global.PDFJS.workerSrc = false;
+                    global.PDFJS.disableWorker = true;
+                }
+            }
+            
+            // Try to load and configure pdf-parse for Electron
+            const pdfParse = require('pdf-parse');
+            const data = await pdfParse(pdfBuffer, parseOptions);
+            
+            if (data && data.text && data.text.trim().length > 100) {
+                console.log(`Electron-optimized extraction successful: ${data.text.length} characters`);
+                return this.cleanupText(data.text);
+            }
+            
+            return null;
+        } catch (error) {
+            console.warn('Electron-optimized parse failed:', error.message);
+            return null;
+        }
+    }
+
     async extractText(pdfBuffer) {
         try {
             // Quick validation - check if buffer starts with PDF header
@@ -51,19 +116,27 @@ class PDFExtractor {
                 throw new Error('Invalid PDF file format');
             }
             
-            // Method 1: Direct PDFJS without pdf-parse wrapper
-            const result = await this.directPDFJSParse(pdfBuffer);
-            if (result) return result;
+            // Method 1: Electron-optimized extraction (NEW)
+            const result1 = await this.electronOptimizedParse(pdfBuffer);
+            if (result1) return result1;
             
-            // Method 2: Legacy PDF.js method (Mozilla GitHub implementation)
-            const result2 = await this.legacyPDFJSParse(pdfBuffer);
+            // Method 2: Direct PDFJS without pdf-parse wrapper
+            const result2 = await this.directPDFJSParse(pdfBuffer);
             if (result2) return result2;
             
-            // Method 3: Simple extraction without worker
-            const result3 = await this.simpleParse(pdfBuffer);
+            // Method 3: Basic PDF text extraction (most reliable)
+            const result3 = await this.basicPDFTextExtraction(pdfBuffer);
             if (result3) return result3;
             
-            // Method 4: Fallback with minimal options
+            // Method 4: Legacy PDF.js method (if others fail)
+            const result4 = await this.legacyPDFJSParse(pdfBuffer);
+            if (result4) return result4;
+            
+            // Method 5: Simple extraction without worker
+            const result5 = await this.simpleParse(pdfBuffer);
+            if (result5) return result5;
+            
+            // Method 6: Fallback with minimal options
             return await this.fallbackParse(pdfBuffer);
             
         } catch (error) {
@@ -152,13 +225,22 @@ class PDFExtractor {
             // Use the older PDF.js version without worker requirements
             const pdfjs = require('pdfjs-dist/legacy/build/pdf.js');
             
+            // Explicitly disable workers for legacy PDF.js
+            if (pdfjs.GlobalWorkerOptions) {
+                pdfjs.GlobalWorkerOptions.workerSrc = false;
+                pdfjs.GlobalWorkerOptions.workerPort = null;
+            }
+            
             // Convert Buffer to ArrayBuffer for legacy PDF.js
             const arrayBuffer = pdfBuffer.buffer.slice(pdfBuffer.byteOffset, pdfBuffer.byteOffset + pdfBuffer.byteLength);
             
             const loadingTask = pdfjs.getDocument({
                 data: arrayBuffer,
                 verbosity: 0, // Reduce console output
-                fontExtraProperties: false
+                fontExtraProperties: false,
+                useWorkerFetch: false,
+                isEvalSupported: false,
+                disableWorker: true
             });
             
             const pdf = await loadingTask.promise;
@@ -209,18 +291,22 @@ class PDFExtractor {
 
     async simpleParse(pdfBuffer) {
         try {
-            const data = await this.pdfParse(pdfBuffer, {
+            // Configure pdf-parse to work without workers in Electron
+            const parseOptions = {
                 // Minimal configuration to avoid worker issues
                 normalizeWhitespace: true,
                 disableCombineTextItems: false,
-                // Custom render options to avoid worker
-                render_options: {
-                    normalizeWhitespace: true,
-                    disableCombineTextItems: false
-                },
-                // Force legacy mode
-                max: 0
-            });
+                // Force legacy mode without workers
+                max: 0,
+                version: 'v1.10.100'
+            };
+            
+            // Try to disable workers at the pdf-parse level
+            if (global.PDFJS) {
+                global.PDFJS.workerSrc = false;
+            }
+            
+            const data = await this.pdfParse(pdfBuffer, parseOptions);
             
             if (data.text && data.text.trim().length > 50) {
                 console.log(`Simple parse successful: ${data.text.length} characters`);
@@ -250,33 +336,58 @@ class PDFExtractor {
         }
     }
 
-    // Basic PDF text extraction as absolute last resort
+    // Basic PDF text extraction - works without any libraries
     async basicPDFTextExtraction(pdfBuffer) {
         try {
+            console.log('Attempting basic PDF text extraction...');
             const pdfString = pdfBuffer.toString('latin1');
             
-            // Look for text objects in PDF structure
-            const textRegex = /\((.*?)\)\s*Tj/g;
+            // Look for text objects in PDF structure with multiple patterns
             const texts = [];
-            let match;
             
-            while ((match = textRegex.exec(pdfString)) !== null) {
-                if (match[1] && match[1].trim()) {
+            // Pattern 1: Direct text objects (text) Tj
+            const textRegex1 = /\((.*?)\)\s*Tj/g;
+            let match;
+            while ((match = textRegex1.exec(pdfString)) !== null) {
+                if (match[1] && match[1].trim() && match[1].length > 1) {
                     texts.push(match[1].trim());
                 }
             }
             
-            // Also look for BT...ET blocks (text blocks)
+            // Pattern 2: Text with positioning [(...)] TJ
+            const textRegex2 = /\[\s*\((.*?)\)\s*\]\s*TJ/g;
+            while ((match = textRegex2.exec(pdfString)) !== null) {
+                if (match[1] && match[1].trim() && match[1].length > 1) {
+                    texts.push(match[1].trim());
+                }
+            }
+            
+            // Pattern 3: BT...ET blocks (text blocks)
             const textBlockRegex = /BT\s+(.*?)\s+ET/gs;
             let blockMatch;
-            
             while ((blockMatch = textBlockRegex.exec(pdfString)) !== null) {
                 const block = blockMatch[1];
+                // Extract text from various commands within the block
                 const blockTexts = block.match(/\((.*?)\)/g);
                 if (blockTexts) {
                     blockTexts.forEach(text => {
                         const cleanText = text.replace(/[()]/g, '').trim();
-                        if (cleanText && cleanText.length > 2) {
+                        if (cleanText && cleanText.length > 1) {
+                            texts.push(cleanText);
+                        }
+                    });
+                }
+            }
+            
+            // Pattern 4: Stream content
+            const streamRegex = /stream\s+(.*?)\s+endstream/gs;
+            while ((match = streamRegex.exec(pdfString)) !== null) {
+                const streamContent = match[1];
+                const streamTexts = streamContent.match(/\((.*?)\)/g);
+                if (streamTexts) {
+                    streamTexts.forEach(text => {
+                        const cleanText = text.replace(/[()]/g, '').trim();
+                        if (cleanText && cleanText.length > 1 && !/^[0-9\s\.\-]+$/.test(cleanText)) {
                             texts.push(cleanText);
                         }
                     });
@@ -285,16 +396,18 @@ class PDFExtractor {
             
             if (texts.length > 0) {
                 const extractedText = texts.join(' ');
-                console.log(`Basic extraction found ${texts.length} text fragments`);
+                console.log(`Basic extraction found ${texts.length} text fragments, ${extractedText.length} total characters`);
                 
                 if (extractedText.length > 100) {
                     return this.cleanupText(extractedText);
                 }
             }
             
-            throw new Error('No readable text found using basic extraction');
+            console.warn('Basic extraction found insufficient text content');
+            return null;
         } catch (error) {
-            throw new Error('All PDF extraction methods failed. Please copy and paste the text manually.');
+            console.warn('Basic PDF extraction failed:', error.message);
+            return null;
         }
     }
 

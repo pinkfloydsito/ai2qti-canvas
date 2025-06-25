@@ -409,7 +409,7 @@ class QTIGenerator {
         </itemmetadata>
         <presentation>
           <material>
-            <mattext texttype="text/html">${this.escapeXML(question.text)}</mattext>
+            <mattext texttype="text/html">${this.escapeForHTML(question.text)}</mattext>
           </material>
           <response_lid ident="response1" rcardinality="Single">
             <render_choice>`;
@@ -418,7 +418,7 @@ class QTIGenerator {
             xml += `
               <response_label ident="${index}">
                 <material>
-                  <mattext texttype="text/plain">${this.escapeXML(choice.text)}</mattext>
+                  <mattext texttype="text/html">${this.escapeForHTML(choice.text)}</mattext>
                 </material>
               </response_label>`;
         });
@@ -462,18 +462,18 @@ class QTIGenerator {
         </itemmetadata>
         <presentation>
           <material>
-            <mattext texttype="text/html">${this.escapeXML(question.text)}</mattext>
+            <mattext texttype="text/html">${this.escapeForHTML(question.text)}</mattext>
           </material>
           <response_lid ident="response1" rcardinality="Single">
             <render_choice>
               <response_label ident="True">
                 <material>
-                  <mattext texttype="text/plain">True</mattext>
+                  <mattext texttype="text/html">True</mattext>
                 </material>
               </response_label>
               <response_label ident="False">
                 <material>
-                  <mattext texttype="text/plain">False</mattext>
+                  <mattext texttype="text/html">False</mattext>
                 </material>
               </response_label>
             </render_choice>
@@ -510,7 +510,7 @@ class QTIGenerator {
         </itemmetadata>
         <presentation>
           <material>
-            <mattext texttype="text/html">${this.escapeXML(question.text)}</mattext>
+            <mattext texttype="text/html">${this.escapeForHTML(question.text)}</mattext>
           </material>
           <response_str ident="response1" rcardinality="Single">
             <render_fib>
@@ -543,7 +543,7 @@ class QTIGenerator {
         </itemmetadata>
         <presentation>
           <material>
-            <mattext texttype="text/html">${this.escapeXML(question.text)}</mattext>
+            <mattext texttype="text/html">${this.escapeForHTML(question.text)}</mattext>
           </material>
           <response_str ident="response1" rcardinality="Single">
             <render_fib>
@@ -577,6 +577,32 @@ class QTIGenerator {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&apos;');
+    }
+
+    // Escape text for HTML content (preserves HTML tags for LaTeX rendering)
+    escapeForHTML(text) {
+        if (!text) return '';
+        
+        // First process LaTeX for QTI - this generates HTML img tags
+        const processedText = this.latexRenderer.prepareForQTI(text);
+        
+        // Split on img tags to handle them separately
+        const parts = processedText.split(/(<img[^>]*>)/);
+        
+        return parts.map((part, index) => {
+            if (part.startsWith('<img') && part.endsWith('>')) {
+                // This is an img tag - escape only the attribute values properly
+                return part.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            } else {
+                // This is regular text - escape XML characters
+                return part
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+        }).join('');
     }
 
     // New methods for AI and LaTeX functionality

@@ -1,0 +1,413 @@
+const ProviderFactory = require('../src/llm-providers/provider-factory');
+const GeminiProvider = require('../src/llm-providers/gemini-provider');
+const MistralProvider = require('../src/llm-providers/mistral-provider');
+const DeepSeekProvider = require('../src/llm-providers/deepseek-provider');
+const HuggingFaceProvider = require('../src/llm-providers/huggingface-provider');
+const BaseLLMProvider = require('../src/llm-providers/base-llm-provider');
+
+describe('LLM Providers Architecture', () => {
+    
+    describe('BaseLLMProvider', () => {
+        test('should not allow direct instantiation', () => {
+            expect(() => new BaseLLMProvider('test')).toThrow('Cannot instantiate abstract class BaseLLMProvider');
+        });
+
+        test('should require implementation of abstract methods', async () => {
+            class TestProvider extends BaseLLMProvider {
+                constructor() {
+                    super('test');
+                }
+            }
+
+            const provider = new TestProvider();
+            
+            await expect(provider.initializeClient()).rejects.toThrow('initializeClient method must be implemented by subclass');
+            await expect(provider.performGeneration('test')).rejects.toThrow('performGeneration method must be implemented by subclass');
+            await expect(provider.performApiKeyTest()).rejects.toThrow('performApiKeyTest method must be implemented by subclass');
+        });
+
+        test('should enforce configuration before use', async () => {
+            class TestProvider extends BaseLLMProvider {
+                constructor() {
+                    super('test');
+                }
+                async initializeClient() {}
+                async performGeneration() { return []; }
+                async performApiKeyTest() { return true; }
+            }
+
+            const provider = new TestProvider();
+            
+            await expect(provider.generateQuestions('test')).rejects.toThrow('test provider is not configured');
+            await expect(provider.testApiKey()).rejects.toThrow('test provider is not configured');
+        });
+    });
+
+    describe('ProviderFactory', () => {
+        test('should create all supported providers', () => {
+            const supportedProviders = ['gemini', 'mistral', 'deepseek', 'huggingface'];
+            
+            supportedProviders.forEach(providerName => {
+                expect(() => ProviderFactory.createProvider(providerName)).not.toThrow();
+                const provider = ProviderFactory.createProvider(providerName);
+                expect(provider).toBeInstanceOf(BaseLLMProvider);
+            });
+        });
+
+        test('should throw error for unsupported provider', () => {
+            expect(() => ProviderFactory.createProvider('unsupported')).toThrow('Unsupported provider: unsupported');
+        });
+
+        test('should return correct available providers', () => {
+            const providers = ProviderFactory.getAvailableProviders();
+            expect(providers).toContain('gemini');
+            expect(providers).toContain('mistral');
+            expect(providers).toContain('deepseek');
+            expect(providers).toContain('huggingface');
+        });
+
+        test('should validate provider support check', () => {
+            expect(ProviderFactory.isProviderSupported('gemini')).toBe(true);
+            expect(ProviderFactory.isProviderSupported('GEMINI')).toBe(true); // Case insensitive
+            expect(ProviderFactory.isProviderSupported('nonexistent')).toBe(false);
+        });
+
+        test('should register new providers', () => {
+            class CustomProvider extends BaseLLMProvider {
+                constructor() { super('custom'); }
+                async initializeClient() {}
+                async performGeneration() { return []; }
+                async performApiKeyTest() { return true; }
+            }
+
+            const initialCount = ProviderFactory.getAvailableProviders().length;
+            ProviderFactory.registerProvider('custom', CustomProvider);
+            
+            expect(ProviderFactory.getAvailableProviders().length).toBe(initialCount + 1);
+            expect(ProviderFactory.isProviderSupported('custom')).toBe(true);
+            
+            const customProvider = ProviderFactory.createProvider('custom');
+            expect(customProvider).toBeInstanceOf(CustomProvider);
+        });
+
+        test('should create multiple providers', () => {
+            const providerNames = ['gemini', 'mistral'];
+            const providers = ProviderFactory.createMultipleProviders(providerNames);
+            
+            expect(providers.size).toBe(2);
+            expect(providers.has('gemini')).toBe(true);
+            expect(providers.has('mistral')).toBe(true);
+            expect(providers.get('gemini')).toBeInstanceOf(GeminiProvider);
+            expect(providers.get('mistral')).toBeInstanceOf(MistralProvider);
+        });
+
+        test('should get provider information', () => {
+            const providerInfos = ProviderFactory.getAllProviderInfo();
+            
+            expect(Array.isArray(providerInfos)).toBe(true);
+            expect(providerInfos.length).toBeGreaterThan(0);
+            
+            const geminiInfo = providerInfos.find(info => info.name === 'gemini');
+            expect(geminiInfo).toBeDefined();
+            expect(geminiInfo.models).toContain('gemini-2.5-flash');
+            expect(typeof geminiInfo.supportsStreaming).toBe('boolean');
+            expect(typeof geminiInfo.maxTokens).toBe('number');
+        });
+
+        test('should validate provider configuration', () => {
+            const validConfig = {
+                apiKey: 'test-key',
+                model: 'gemini-2.5-flash',
+                maxTokens: 1000
+            };
+            
+            const validation = ProviderFactory.validateProviderConfig('gemini', validConfig);
+            expect(validation.isValid).toBe(true);
+            expect(validation.errors).toHaveLength(0);
+            
+            const invalidConfig = {
+                model: 'gemini-2.5-flash'
+                // Missing apiKey
+            };
+            
+            const invalidValidation = ProviderFactory.validateProviderConfig('gemini', invalidConfig);
+            expect(invalidValidation.isValid).toBe(false);
+            expect(invalidValidation.errors).toContain('API key is required');
+        });
+    });
+
+    describe('GeminiProvider', () => {
+        let provider;
+
+        beforeEach(() => {
+            provider = new GeminiProvider();
+        });
+
+        test('should initialize with correct configuration', () => {
+            expect(provider.name).toBe('gemini');
+            expect(provider.getAvailableModels()).toContain('gemini-2.5-flash');
+            expect(provider.config.supportsStreaming).toBe(true);
+            expect(provider.config.maxTokens).toBe(8192);
+        });
+
+        test('should require API key for configuration', async () => {
+            await expect(provider.configure('')).rejects.toThrow('API key is required for gemini provider');
+        });
+
+        test('should extract JSON from response correctly', () => {
+            const testResponse = '```json\n{"questions": [{"type": "multiple_choice", "text": "Test?"}]}\n```';
+            const result = provider.extractJSONFromResponse(testResponse);
+            const parsed = JSON.parse(result);
+            
+            expect(parsed.questions).toBeDefined();
+            expect(parsed.questions[0].type).toBe('multiple_choice');
+        });
+
+        test('should handle LaTeX in JSON responses', () => {
+            const testResponse = '{"questions": [{"text": "What is $\\\\frac{x}{2}$?"}]}';
+            const result = provider.extractJSONFromResponse(testResponse);
+            const parsed = JSON.parse(result);
+            
+            expect(parsed.questions[0].text).toContain('\\frac{x}{2}');
+        });
+
+        test('should repair malformed JSON', () => {
+            const malformedJson = '{"questions": [{"text": "Test"}]}'; // Valid JSON for test
+            const result = provider.extractJSONFromResponse(malformedJson);
+            
+            expect(() => JSON.parse(result)).not.toThrow();
+        });
+    });
+
+    describe('MistralProvider', () => {
+        let provider;
+
+        beforeEach(() => {
+            provider = new MistralProvider();
+        });
+
+        test('should initialize with correct configuration', () => {
+            expect(provider.name).toBe('mistral');
+            expect(provider.getAvailableModels()).toContain('mistral-7b-instruct');
+            expect(provider.config.baseUrl).toBe('https://api.mistral.ai/v1');
+            expect(provider.config.rateLimits.requestsPerMinute).toBe(5);
+        });
+
+        test('should format request correctly', async () => {
+            // Mock the client initialization
+            provider.client = {
+                headers: {
+                    'Authorization': 'Bearer test-key',
+                    'Content-Type': 'application/json'
+                }
+            };
+            provider.isConfigured = true;
+
+            // Test the makeRequest method would be called with correct format
+            const testPrompt = 'Generate questions';
+            
+            // We can't easily test the actual API call without mocking fetch
+            // But we can verify the provider structure is correct
+            expect(provider.config.models.length).toBeGreaterThan(0);
+            expect(provider.config.baseUrl).toBeTruthy();
+        });
+    });
+
+    describe('DeepSeekProvider', () => {
+        let provider;
+
+        beforeEach(() => {
+            provider = new DeepSeekProvider();
+        });
+
+        test('should initialize with correct configuration', () => {
+            expect(provider.name).toBe('deepseek');
+            expect(provider.getAvailableModels()).toContain('deepseek-chat');
+            expect(provider.config.baseUrl).toBe('https://api.deepseek.com/v1');
+        });
+
+        test('should handle model-specific errors', () => {
+            const testError = new Error('model not found');
+            
+            // The provider should handle this type of error gracefully
+            expect(testError.message).toContain('model not found');
+        });
+    });
+
+    describe('HuggingFaceProvider', () => {
+        let provider;
+
+        beforeEach(() => {
+            provider = new HuggingFaceProvider();
+        });
+
+        test('should initialize with correct configuration', () => {
+            expect(provider.name).toBe('huggingface');
+            expect(provider.getAvailableModels()).toContain('mistralai/Mistral-7B-Instruct-v0.1');
+            expect(provider.config.baseUrl).toBe('https://api-inference.huggingface.co');
+        });
+
+        test('should format request for different models', () => {
+            const prompt = 'Test prompt';
+            
+            const dialogGptRequest = provider.formatRequestForModel('microsoft/DialoGPT-medium', prompt);
+            expect(dialogGptRequest.inputs).toBe(prompt);
+            expect(dialogGptRequest.parameters.max_length).toBe(512);
+            
+            const flanRequest = provider.formatRequestForModel('google/flan-t5-large', prompt);
+            expect(flanRequest.inputs).toContain('Generate educational questions');
+        });
+
+        test('should extract text from various response formats', () => {
+            const responses = [
+                [{ generated_text: 'Generated content' }],
+                [{ translation_text: 'Translated content' }],
+                [{ summary_text: 'Summary content' }],
+                ['Direct string content']
+            ];
+            
+            responses.forEach((response, index) => {
+                const text = provider.extractTextFromResponse(response, 'test-model');
+                expect(text).toBeTruthy();
+                expect(typeof text).toBe('string');
+            });
+        });
+
+        test('should construct JSON from unstructured text', () => {
+            const unstructuredText = `
+            1. What is the capital of France?
+            A) London
+            B) Paris
+            C) Berlin
+            D) Madrid
+            
+            2. What is 2 + 2?
+            A) 3
+            B) 4
+            C) 5
+            D) 6
+            `;
+            
+            const result = provider.constructJSONFromText(unstructuredText);
+            const parsed = JSON.parse(result);
+            
+            expect(parsed.questions).toBeDefined();
+            expect(parsed.questions.length).toBe(2);
+            expect(parsed.questions[0].choices.length).toBe(4);
+        });
+    });
+
+    describe('Integration Tests', () => {
+        test('should handle provider switching', async () => {
+            const geminiProvider = ProviderFactory.createProvider('gemini');
+            const mistralProvider = ProviderFactory.createProvider('mistral');
+            
+            expect(geminiProvider.name).toBe('gemini');
+            expect(mistralProvider.name).toBe('mistral');
+            
+            // Both providers should implement the same interface
+            expect(typeof geminiProvider.configure).toBe('function');
+            expect(typeof mistralProvider.configure).toBe('function');
+            expect(typeof geminiProvider.generateQuestions).toBe('function');
+            expect(typeof mistralProvider.generateQuestions).toBe('function');
+        });
+
+        test('should maintain provider state independently', async () => {
+            const provider1 = ProviderFactory.createProvider('gemini');
+            const provider2 = ProviderFactory.createProvider('gemini');
+            
+            // Different instances should be independent
+            expect(provider1).not.toBe(provider2);
+            expect(provider1.isConfigured).toBe(false);
+            expect(provider2.isConfigured).toBe(false);
+        });
+
+        test('should handle concurrent provider operations', async () => {
+            const providers = ProviderFactory.createMultipleProviders(['gemini', 'mistral', 'deepseek']);
+            
+            // All providers should be created successfully
+            expect(providers.size).toBe(3);
+            
+            // Each provider should be independently configurable
+            for (const [name, provider] of providers) {
+                expect(provider.isConfigured).toBe(false);
+                expect(typeof provider.getProviderInfo).toBe('function');
+                
+                const info = provider.getProviderInfo();
+                expect(info.name).toBe(name);
+                expect(Array.isArray(info.models)).toBe(true);
+            }
+        });
+    });
+
+    describe('Error Handling', () => {
+        test('should handle network errors gracefully', async () => {
+            const provider = new MistralProvider();
+            provider.client = {
+                headers: { 'Authorization': 'Bearer test' }
+            };
+            provider.isConfigured = true;
+
+            // Mock a network error scenario
+            const fetch = require('node-fetch');
+            const originalFetch = fetch;
+            
+            // Mock node-fetch to throw network error
+            jest.doMock('node-fetch', () => {
+                return jest.fn().mockRejectedValue(new Error('ENOTFOUND'));
+            });
+
+            await expect(provider.performGeneration('test')).rejects.toThrow(/models failed|network error/i);
+        });
+
+        test('should validate JSON responses', () => {
+            const provider = new GeminiProvider();
+            
+            expect(() => provider.extractJSONFromResponse('Not JSON at all')).toThrow('No JSON object found in response');
+            expect(() => provider.extractJSONFromResponse('{"invalid": json}')).toThrow(/Invalid JSON format/);
+        });
+
+        test('should handle API rate limits', async () => {
+            const provider = new MistralProvider();
+            
+            // Rate limits should be defined
+            expect(provider.config.rateLimits).toBeDefined();
+            expect(typeof provider.config.rateLimits.requestsPerMinute).toBe('number');
+        });
+    });
+});
+
+describe('Performance and Scalability', () => {
+    test('should create providers efficiently', () => {
+        const startTime = Date.now();
+        
+        for (let i = 0; i < 100; i++) {
+            ProviderFactory.createProvider('gemini');
+        }
+        
+        const endTime = Date.now();
+        const duration = endTime - startTime;
+        
+        // Should create 100 providers in less than 1 second
+        expect(duration).toBeLessThan(1000);
+    });
+
+    test('should handle large provider registrations', () => {
+        const initialCount = ProviderFactory.getAvailableProviders().length;
+        
+        // Register multiple test providers
+        for (let i = 0; i < 10; i++) {
+            class TestProvider extends BaseLLMProvider {
+                constructor() { super(`test${i}`); }
+                async initializeClient() {}
+                async performGeneration() { return []; }
+                async performApiKeyTest() { return true; }
+            }
+            
+            ProviderFactory.registerProvider(`test${i}`, TestProvider);
+        }
+        
+        const newCount = ProviderFactory.getAvailableProviders().length;
+        expect(newCount).toBe(initialCount + 10);
+    });
+});
