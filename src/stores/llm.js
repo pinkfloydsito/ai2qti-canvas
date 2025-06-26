@@ -11,7 +11,7 @@ export const llmStore = writable({
 
 // AI generation parameters store
 export const aiGenerationStore = writable({
-  contextText: '',
+  contextText: 'La inteligencia artificial es un campo de la informática que se enfoca en crear sistemas capaces de realizar tareas que típicamente requieren inteligencia humana. Estos sistemas pueden aprender, razonar, planificar y percibir. Los algoritmos de machine learning permiten a las máquinas mejorar su rendimiento en tareas específicas a través de la experiencia.',
   pdfFile: null,
   fileName: '',
   questionCount: 5,

@@ -6,6 +6,7 @@
   import QuestionsSection from './components/QuestionsSection.svelte';
   import { assessmentStore } from './stores/assessment.js';
   import { llmStore } from './stores/llm.js';
+  import { t } from './stores/localization.js';
   
   // Initialize services (imported from existing code)
   import { qtiGenerator } from './services/qti-generator.js';
@@ -39,14 +40,14 @@
   async function handleExportQTI() {
     try {
       if (assessment.questions.length === 0) {
-        alert('Please add at least one question before exporting.');
+        alert($t('messages.errors.noQuestions'));
         return;
       }
       
       await qtiGenerator.exportQTI(assessment);
-      alert('QTI file exported successfully!');
+      alert($t('messages.success.qtiExported'));
     } catch (error) {
-      alert(`Error exporting QTI: ${error.message}`);
+      alert($t('messages.errors.exportError', { error: error.message }));
     }
   }
   
@@ -61,16 +62,21 @@
   
   async function handleGenerateQuestions(event) {
     try {
+      console.log('📱 App: Received generateQuestions event');
       const params = event.detail;
+      console.log('📱 App: Event params:', params);
+      
       const result = await qtiGenerator.generateQuestions(params);
+      console.log('📱 App: Generation result:', result);
       
       if (result.success) {
-        alert(`Successfully generated ${result.questions.length} questions!`);
+        alert($t('messages.success.questionsGenerated', { count: result.questions.length }));
       } else {
-        alert(`Error generating questions: ${result.error}`);
+        alert($t('messages.errors.generationError', { error: result.error }));
       }
     } catch (error) {
-      alert(`Error generating questions: ${error.message}`);
+      console.error('📱 App: Exception in handleGenerateQuestions:', error);
+      alert($t('messages.errors.generationError', { error: error.message }));
     }
   }
 </script>

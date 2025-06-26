@@ -1,6 +1,7 @@
 <script>
   import { assessmentActions } from '../stores/assessment.js';
   import { createEventDispatcher } from 'svelte';
+  import { t, currentLanguage, setLanguage } from '../stores/localization.js';
   
   const dispatch = createEventDispatcher();
   
@@ -16,21 +17,29 @@
   function exportQTI() {
     dispatch('exportQTI');
   }
+  
+  function handleLanguageChange(event) {
+    setLanguage(event.target.value);
+  }
 </script>
 
 <header class="header">
   <div class="header-content">
-    <h1>QTI Generator for Canvas LMS</h1>
+    <h1>{$t('app.title')}</h1>
     <div class="toolbar">
       <button class="btn btn-primary" on:click={newAssessment}>
-        New Assessment
+        {$t('app.toolbar.newAssessment')}
       </button>
       <button class="btn btn-secondary" on:click={saveAssessment}>
-        Save
+        {$t('app.toolbar.save')}
       </button>
       <button class="btn btn-success" on:click={exportQTI}>
-        Export QTI
+        {$t('app.toolbar.exportQTI')}
       </button>
+      <select class="language-selector" value={$currentLanguage} on:change={handleLanguageChange}>
+        <option value="en">English</option>
+        <option value="es">Español</option>
+      </select>
     </div>
   </div>
 </header>
@@ -61,6 +70,16 @@
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
+    align-items: center;
+  }
+  
+  .language-selector {
+    padding: 8px 12px;
+    border: 1px solid #34495e;
+    border-radius: 4px;
+    background: white;
+    color: #2c3e50;
+    font-size: 14px;
   }
   
   @media (max-width: 768px) {

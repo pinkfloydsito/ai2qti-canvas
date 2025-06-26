@@ -1,5 +1,6 @@
 <script>
   import { createEventDispatcher } from 'svelte';
+  import { t } from '../stores/localization.js';
   
   export let question;
   export let questionNumber;
@@ -57,7 +58,7 @@
 <div class="question-item" data-type={question.type}>
   <div class="question-header">
     <div class="question-info">
-      <span class="question-number">Question {questionNumber}</span>
+      <span class="question-number">{$t('questions.questionNumber')} {questionNumber}</span>
       <span class="question-type">{questionTypeLabel}</span>
     </div>
     <button class="btn-remove" on:click={removeQuestion} title="Remove question">
@@ -67,10 +68,10 @@
   
   <div class="question-content">
     <div class="form-group">
-      <label>Question Text:</label>
+      <label>{$t('questions.questionText')}</label>
       <textarea 
         class="question-text" 
-        placeholder="Enter your question (LaTeX supported: use $ for inline math, $$ for display math)"
+        placeholder="{$t('questions.questionTextPlaceholder')}"
         value={question.text}
         on:input={handleTextChange}
         rows="3"
@@ -79,7 +80,7 @@
     </div>
     
     <div class="form-group">
-      <label>Points:</label>
+      <label>{$t('questions.points')}</label>
       <input 
         type="number" 
         class="question-points" 
@@ -91,7 +92,7 @@
     
     {#if question.type === 'multiple_choice'}
       <div class="choices-container">
-        <label>Answer Choices:</label>
+        <label>{$t('questions.choices')}</label>
         {#each question.choices || [] as choice, index}
           <div class="choice-item">
             <input 
@@ -103,7 +104,7 @@
             <input 
               type="text" 
               class="choice-text" 
-              placeholder="Choice {String.fromCharCode(65 + index)} (LaTeX supported)"
+              placeholder="{$t('questions.choicePlaceholder')} {String.fromCharCode(65 + index)} (LaTeX soportado)"
               value={choice.text}
               on:input={(e) => updateChoice(index, e.target.value)}
             />
@@ -112,30 +113,30 @@
             {/if}
           </div>
         {/each}
-        <button class="btn-add-choice" on:click={addChoice}>Add Choice</button>
+        <button class="btn-add-choice" on:click={addChoice}>{$t('questions.addChoice')}</button>
       </div>
     {/if}
     
     {#if question.type === 'true_false'}
       <div class="form-group">
-        <label>Correct Answer:</label>
+        <label>{$t('questions.correctAnswer')}</label>
         <select 
           class="correct-answer"
           value={question.correctAnswer || 'true'}
           on:change={handleCorrectAnswerChange}
         >
-          <option value="true">True</option>
-          <option value="false">False</option>
+          <option value="true">Verdadero</option>
+          <option value="false">Falso</option>
         </select>
       </div>
     {/if}
     
     {#if question.type === 'short_answer'}
       <div class="form-group">
-        <label>Sample Answer (optional):</label>
+        <label>{$t('questions.sampleAnswer')}</label>
         <textarea 
           class="sample-answer" 
-          placeholder="Enter a sample answer for grading reference"
+          placeholder="Ingresa una respuesta de ejemplo para referencia de calificación"
           value={question.sampleAnswer || ''}
           on:input={(e) => updateQuestion({ sampleAnswer: e.target.value })}
           rows="2"
@@ -145,10 +146,10 @@
     
     {#if question.type === 'essay'}
       <div class="form-group">
-        <label>Grading Rubric (optional):</label>
+        <label>{$t('questions.gradingRubric')}</label>
         <textarea 
           class="grading-rubric" 
-          placeholder="Enter grading criteria"
+          placeholder="Ingresa criterios de calificación"
           value={question.gradingRubric || ''}
           on:input={(e) => updateQuestion({ gradingRubric: e.target.value })}
           rows="3"

@@ -3,6 +3,7 @@
   import { llmStore } from '../stores/llm.js';
   import { assessmentActions } from '../stores/assessment.js';
   import { createEventDispatcher } from 'svelte';
+  import { t } from '../stores/localization.js';
   
   const dispatch = createEventDispatcher();
   
@@ -20,11 +21,11 @@
   });
   
   // Question type options
-  const questionTypeOptions = [
-    { value: 'multiple_choice', label: 'Multiple Choice' },
-    { value: 'true_false', label: 'True/False' },
-    { value: 'short_answer', label: 'Short Answer' },
-    { value: 'essay', label: 'Essay' }
+  $: questionTypeOptions = [
+    { value: 'multiple_choice', label: $t('aiGeneration.typeLabels.multipleChoice') },
+    { value: 'true_false', label: $t('aiGeneration.typeLabels.trueFalse') },
+    { value: 'short_answer', label: $t('aiGeneration.typeLabels.shortAnswer') },
+    { value: 'essay', label: $t('aiGeneration.typeLabels.essay') }
   ];
   
   function handleFileUpload(event) {
@@ -72,21 +73,28 @@
   }
   
   async function generateQuestions() {
+    console.log('🤖 AIGeneration: Generate button clicked');
+    console.log('🔧 AIGeneration: LLM configured?', llmConfig.isConfigured);
+    console.log('📝 AIGeneration: Context text:', aiParams.contextText?.substring(0, 100) + '...');
+    console.log('📄 AIGeneration: PDF file:', aiParams.pdfFile?.name);
+    console.log('🎯 AIGeneration: Question types:', aiParams.questionTypes);
+    
     if (!llmConfig.isConfigured) {
       alert('Please configure your LLM provider first.');
       return;
     }
     
     if (!aiParams.contextText && !aiParams.pdfFile) {
-      alert('Please provide either text context or upload a PDF file.');
+      alert($t('messages.errors.noContext'));
       return;
     }
     
     if (aiParams.questionTypes.length === 0) {
-      alert('Please select at least one question type.');
+      alert($t('messages.errors.noQuestionTypes'));
       return;
     }
     
+    console.log('🚀 AIGeneration: Dispatching generateQuestions event');
     dispatch('generateQuestions', {
       contextText: aiParams.contextText,
       pdfFile: aiParams.pdfFile,
@@ -106,10 +114,10 @@
 </script>
 
 <section class="ai-generation-section">
-  <h2>AI Question Generation</h2>
+  <h2>{$t('aiGeneration.title')}</h2>
   <div class="ai-controls">
     <div class="form-group">
-      <label for="pdfUpload">Upload PDF or Enter Text:</label>
+      <label for="pdfUpload">{$t('aiGeneration.uploadPdf')}</label>
       <div class="upload-area">
         <input 
           type="file" 
@@ -119,7 +127,7 @@
           on:change={handleFileUpload}
         />
         <button class="btn btn-secondary" on:click={triggerFileUpload}>
-          Choose PDF File
+          {$t('aiGeneration.chooseFile')}
         </button>
         {#if aiParams.fileName}
           <span class="file-name">
@@ -132,26 +140,26 @@
             <div class="progress-bar">
               <div class="progress-fill" style="width: {aiParams.extractionProgress}%"></div>
             </div>
-            <span>Extracting PDF... {aiParams.extractionProgress}%</span>
+            <span>{$t('processing.extractingPdf')} {aiParams.extractionProgress}%</span>
           </div>
         {/if}
       </div>
     </div>
     
     <div class="form-group">
-      <label for="contextText">Or Enter Text Context:</label>
+      <label for="contextText">{$t('aiGeneration.contextText')}</label>
       <textarea 
         id="contextText" 
-        placeholder="Enter the content/context for question generation... (If PDF upload fails, copy and paste your content here)" 
+        placeholder="{$t('aiGeneration.contextPlaceholder')}" 
         rows="6"
         value={aiParams.contextText}
         on:input={handleContextTextChange}
       ></textarea>
-      <small>💡 Tip: If PDF extraction doesn't work, you can copy text from your PDF and paste it here manually.</small>
+      <small>{$t('aiGeneration.tip')}</small>
     </div>
     
     <div class="form-group">
-      <label for="questionCount">Number of Questions:</label>
+      <label for="questionCount">{$t('aiGeneration.questionCount')}</label>
       <input 
         type="number" 
         id="questionCount" 
@@ -163,21 +171,21 @@
     </div>
     
     <div class="form-group">
-      <label for="difficultyLevel">Difficulty Level:</label>
+      <label for="difficultyLevel">{$t('aiGeneration.difficulty')}</label>
       <select 
         id="difficultyLevel" 
         value={aiParams.difficultyLevel}
         on:change={handleDifficultyChange}
       >
-        <option value="easy">Easy</option>
-        <option value="medium">Medium</option>
-        <option value="hard">Hard</option>
-        <option value="mixed">Mixed</option>
+        <option value="easy">{$t('aiGeneration.difficultyLevels.easy')}</option>
+        <option value="medium">{$t('aiGeneration.difficultyLevels.medium')}</option>
+        <option value="hard">{$t('aiGeneration.difficultyLevels.hard')}</option>
+        <option value="mixed">{$t('aiGeneration.difficultyLevels.mixed')}</option>
       </select>
     </div>
     
     <div class="form-group">
-      <label>Question Types:</label>
+      <label>{$t('aiGeneration.questionTypes')}</label>
       <div class="checkbox-group">
         {#each questionTypeOptions as option}
           <label class="checkbox-label">
@@ -200,7 +208,7 @@
           checked={aiParams.includeMath}
           on:change={handleIncludeMathChange}
         />
-        Include LaTeX math notation for mathematical content
+        {$t('aiGeneration.includeMath')}
       </label>
     </div>
     
@@ -210,9 +218,9 @@
       disabled={llmConfig.isGenerating || !llmConfig.isConfigured}
     >
       {#if llmConfig.isGenerating}
-        🤖 Generating Questions...
+        🤖 {$t('aiGeneration.generating')}
       {:else}
-        Generate Questions with AI
+        {$t('aiGeneration.generateBtn')}
       {/if}
     </button>
   </div>

@@ -1,5 +1,6 @@
 <script>
   import { assessmentStore, assessmentActions } from '../stores/assessment.js';
+  import { t } from '../stores/localization.js';
   
   let assessment = $assessmentStore;
   
@@ -23,24 +24,24 @@
 </script>
 
 <section class="assessment-details">
-  <h2>Assessment Details</h2>
+  <h2>{$t('assessment.title')}</h2>
   <div class="details-form">
     <div class="form-group">
-      <label for="assessmentTitle">Title:</label>
+      <label for="assessmentTitle">{$t('assessment.titleField')}</label>
       <input 
         type="text" 
         id="assessmentTitle" 
-        placeholder="Enter assessment title"
+        placeholder="{$t('assessment.titlePlaceholder')}"
         value={assessment.title}
         on:input={handleTitleChange}
       />
     </div>
     
     <div class="form-group">
-      <label for="assessmentDescription">Description:</label>
+      <label for="assessmentDescription">{$t('assessment.description')}</label>
       <textarea 
         id="assessmentDescription" 
-        placeholder="Enter assessment description"
+        placeholder="{$t('assessment.descriptionPlaceholder')}"
         rows="3"
         value={assessment.description}
         on:input={handleDescriptionChange}
@@ -48,44 +49,44 @@
     </div>
     
     <div class="form-group">
-      <label for="timeLimit">Time Limit (minutes):</label>
+      <label for="timeLimit">{$t('assessment.timeLimit')}</label>
       <input 
         type="number" 
         id="timeLimit" 
-        placeholder="0 for no limit"
+        placeholder="{$t('assessment.timeLimitPlaceholder')}"
         min="0"
         value={assessment.timeLimit || ''}
         on:input={handleTimeLimitChange}
       />
       <small>
         {#if assessment.timeLimit > 0}
-          Students will have {assessment.timeLimit} minutes to complete this assessment.
+          Los estudiantes tendrán {assessment.timeLimit} minutos para completar esta evaluación.
         {:else}
-          No time limit - students can take as long as needed.
+          Sin límite de tiempo - los estudiantes pueden tomar el tiempo que necesiten.
         {/if}
       </small>
     </div>
     
     {#if assessment.questions.length > 0}
       <div class="assessment-summary">
-        <h3>Assessment Summary</h3>
+        <h3>Resumen de la Evaluación</h3>
         <div class="summary-stats">
           <div class="stat">
             <strong>{assessment.questions.length}</strong>
-            <span>Questions</span>
+            <span>Preguntas</span>
           </div>
           <div class="stat">
             <strong>{assessment.questions.reduce((sum, q) => sum + (q.points || 0), 0)}</strong>
-            <span>Total Points</span>
+            <span>Puntos Totales</span>
           </div>
           <div class="stat">
             <strong>{assessment.timeLimit || 'No'}</strong>
-            <span>Time Limit</span>
+            <span>Límite de Tiempo</span>
           </div>
         </div>
         
         <div class="question-types-summary">
-          <h4>Question Types:</h4>
+          <h4>Tipos de Preguntas:</h4>
           <div class="type-counts">
             {#each Object.entries(assessment.questions.reduce((acc, q) => {
               acc[q.type] = (acc[q.type] || 0) + 1;

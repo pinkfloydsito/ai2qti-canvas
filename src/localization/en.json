@@ -87,7 +87,8 @@
       "apiSetupError": "Error setting up API provider: {error}",
       "generationError": "Error generating questions: {error}",
       "apiKeyInvalid": "API key is invalid",
-      "apiKeyError": "Error validating API key"
+      "apiKeyError": "Error validating API key",
+      "noQuestions": "Please add at least one question before exporting."
     },
     "validation": {
       "apiKeyValid": "API key is valid",

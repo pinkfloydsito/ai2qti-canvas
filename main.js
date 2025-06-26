@@ -149,6 +149,91 @@ ipcMain.handle('load-file', async (event, filePath) => {
   }
 });
 
+// Export QTI handler
+ipcMain.handle('export-qti', async (event, qtiXML) => {
+  try {
+    const result = await dialog.showSaveDialog(mainWindow, {
+      defaultPath: 'assessment.xml',
+      filters: [
+        { name: 'QTI Files', extensions: ['xml'] },
+        { name: 'XML Files', extensions: ['xml'] }
+      ]
+    });
+
+    if (!result.canceled) {
+      fs.writeFileSync(result.filePath, qtiXML);
+      return { success: true, filePath: result.filePath };
+    }
+    
+    return { success: false, canceled: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Save assessment handler
+ipcMain.handle('save-assessment', async (event, assessmentData) => {
+  try {
+    const result = await dialog.showSaveDialog(mainWindow, {
+      defaultPath: 'assessment.json',
+      filters: [
+        { name: 'JSON Files', extensions: ['json'] }
+      ]
+    });
+
+    if (!result.canceled) {
+      fs.writeFileSync(result.filePath, JSON.stringify(assessmentData, null, 2));
+      return { success: true, filePath: result.filePath };
+    }
+    
+    return { success: false, canceled: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Load assessment handler
+ipcMain.handle('load-assessment', async (event) => {
+  try {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openFile'],
+      filters: [
+        { name: 'JSON Files', extensions: ['json'] }
+      ]
+    });
+    
+    if (!result.canceled && result.filePaths.length > 0) {
+      const data = fs.readFileSync(result.filePaths[0], 'utf8');
+      const assessment = JSON.parse(data);
+      return { success: true, assessment };
+    }
+    
+    return { success: false, canceled: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Select PDF file handler
+ipcMain.handle('select-pdf-file', async (event) => {
+  try {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openFile'],
+      filters: [
+        { name: 'PDF Files', extensions: ['pdf'] }
+      ]
+    });
+    
+    if (!result.canceled && result.filePaths.length > 0) {
+      return { success: true, filePath: result.filePaths[0] };
+    }
+    
+    return { success: false, canceled: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
 app.whenReady().then(() => {
   createWindow();
   createMenu();

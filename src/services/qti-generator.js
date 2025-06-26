@@ -2,51 +2,161 @@
 import { assessmentActions } from '../stores/assessment.js';
 import { llmActions, aiGenerationActions } from '../stores/llm.js';
 
-// Import existing services - use dynamic imports for Node.js modules
-let LLMService, QTIExporter, LaTeXRenderer, LocalizationManager, PDFExtractor;
+// Import the real browser LLM service
+import { BrowserLLMService } from './browser-llm-service.js';
 
-async function loadNodeModules() {
-  if (typeof window !== 'undefined' && window.electronAPI) {
-    // In Electron renderer process, we'll need to communicate with main process
-    // For now, create placeholder classes
-    return {
-      LLMService: class { async configure() { return true; } async generateQuestions() { return []; } destroy() {} },
-      QTIExporter: class { generateQTI() { return ''; } validateXML() { return { isValid: true, errors: [] }; } },
-      LaTeXRenderer: class { renderMath(text) { return text; } previewMath() {} },
-      LocalizationManager: class { init() {} },
-      PDFExtractor: class { async extractText() { return ''; } }
-    };
-  } else {
-    // In Node.js environment (tests, etc.)
-    const modules = await Promise.all([
-      import('../llm-service-v2.js'),
-      import('../qti-exporter.js'),
-      import('../latex-renderer.js'),
-      import('../localization/localization.js'),
-      import('../pdf-extractor.js')
-    ]);
-    
-    return {
-      LLMService: modules[0].default,
-      QTIExporter: modules[1].default,
-      LaTeXRenderer: modules[2].default,
-      LocalizationManager: modules[3].default,
-      PDFExtractor: modules[4].default
-    };
+// Browser-compatible LaTeX renderer
+class BrowserLaTeXRenderer {
+  renderMath(text) {
+    // For now, just return the text as-is
+    // In a real implementation, you'd use KaTeX in the browser
+    return text;
+  }
+  
+  previewMath(inputText, previewElement) {
+    if (previewElement) {
+      previewElement.textContent = inputText;
+    }
   }
 }
 
+// Browser-compatible QTI exporter
+class BrowserQTIExporter {
+  generateQTI(assessment) {
+    const assessmentId = this.generateId();
+    const timestamp = new Date().toISOString();
+    
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<questestinterop xmlns="http://www.imsglobal.org/xsd/ims_qtiasiv1p2">
+  <assessment ident="${assessmentId}" title="${this.escapeXML(assessment.title)}">
+    <qtimetadata>
+      <qtimetadatafield>
+        <fieldlabel>qmd_timelimit</fieldlabel>
+        <fieldentry>${assessment.timeLimit || 0}</fieldentry>
+      </qtimetadatafield>
+    </qtimetadata>
+    <section ident="root_section">
+      ${assessment.questions.map((question, index) => this.generateQuestionXML(question, index)).join('\n')}
+    </section>
+  </assessment>
+</questestinterop>`;
+    
+    return xml;
+  }
+
+  generateQuestionXML(question, index) {
+    const questionId = this.generateId();
+    
+    return `<item ident="${questionId}" title="Pregunta ${index + 1}">
+      <itemmetadata>
+        <qtimetadata>
+          <qtimetadatafield>
+            <fieldlabel>question_type</fieldlabel>
+            <fieldentry>${question.type}</fieldentry>
+          </qtimetadatafield>
+          <qtimetadatafield>
+            <fieldlabel>points_possible</fieldlabel>
+            <fieldentry>${question.points || 1}</fieldentry>
+          </qtimetadatafield>
+        </qtimetadata>
+      </itemmetadata>
+      <presentation>
+        <material>
+          <mattext texttype="text/html">${this.escapeXML(question.text)}</mattext>
+        </material>
+        ${this.generateResponseXML(question)}
+      </presentation>
+      ${this.generateProcessingXML(question)}
+    </item>`;
+  }
+
+  generateResponseXML(question) {
+    if (question.type === 'multiple_choice') {
+      return `<response_lid ident="response1" rcardinality="Single">
+        <render_choice>
+          ${question.choices.map((choice, index) => `
+            <response_label ident="${index}">
+              <material>
+                <mattext texttype="text/html">${this.escapeXML(choice.text)}</mattext>
+              </material>
+            </response_label>
+          `).join('')}
+        </render_choice>
+      </response_lid>`;
+    }
+    return '';
+  }
+
+  generateProcessingXML(question) {
+    if (question.type === 'multiple_choice') {
+      const correctIndex = question.choices.findIndex(choice => choice.correct);
+      return `<resprocessing>
+        <outcomes>
+          <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+        </outcomes>
+        <respcondition continue="No">
+          <conditionvar>
+            <varequal respident="response1">${correctIndex}</varequal>
+          </conditionvar>
+          <setvar action="Set" varname="SCORE">100</setvar>
+        </respcondition>
+      </resprocessing>`;
+    }
+    return '';
+  }
+
+  generateId() {
+    return 'g' + Math.random().toString(36).substr(2, 16);
+  }
+
+  escapeXML(text) {
+    if (!text) return '';
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;');
+  }
+
+  validateXML(xml) {
+    // Basic validation - just check if it's well-formed
+    try {
+      if (typeof DOMParser !== 'undefined') {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(xml, 'application/xml');
+        const errors = doc.getElementsByTagName('parsererror');
+        return {
+          isValid: errors.length === 0,
+          errors: Array.from(errors).map(e => e.textContent)
+        };
+      }
+      return { isValid: true, errors: [] };
+    } catch (error) {
+      return { isValid: false, errors: [error.message] };
+    }
+  }
+}
+
+// Browser-compatible PDF extractor
+class BrowserPDFExtractor {
+  async extractText(buffer) {
+    // For demo purposes, return placeholder text
+    // In a real implementation, you'd use PDF.js
+    return "Texto extraído del PDF de ejemplo. Esta es una funcionalidad de demostración.";
+  }
+}
+
+// The real LLM service is now imported from browser-llm-service.js
+
 class QTIGeneratorService {
   constructor() {
-    this.llmService = null;
-    this.qtiExporter = null;
-    this.latexRenderer = null;
-    this.localization = null;
+    this.llmService = new BrowserLLMService();
+    this.qtiExporter = new BrowserQTIExporter();
+    this.latexRenderer = new BrowserLaTeXRenderer();
+    this.pdfExtractor = new BrowserPDFExtractor();
     this.currentProvider = 'gemini';
-    this.initialized = false;
-    
-    // Initialize asynchronously
-    this.init();
+    this.initialized = true;
     
     // Cleanup on page unload
     if (typeof window !== 'undefined') {
@@ -57,29 +167,7 @@ class QTIGeneratorService {
   }
   
   async ensureInitialized() {
-    if (!this.initialized) {
-      await this.init();
-    }
-  }
-  
-  async init() {
-    try {
-      const modules = await loadNodeModules();
-      
-      this.llmService = new modules.LLMService();
-      this.qtiExporter = new modules.QTIExporter();
-      this.latexRenderer = new modules.LaTeXRenderer();
-      this.localization = new modules.LocalizationManager();
-      
-      // Initialize localization
-      setTimeout(() => {
-        this.localization.init();
-      }, 100);
-      
-      this.initialized = true;
-    } catch (error) {
-      console.error('Failed to initialize QTI Generator service:', error);
-    }
+    return true; // Always initialized now
   }
   
   destroy() {
@@ -91,11 +179,12 @@ class QTIGeneratorService {
   // LLM Configuration
   async configureLLM(provider, apiKey) {
     try {
-      await this.ensureInitialized();
+      console.log('🔧 Configuring LLM:', { provider, apiKey: apiKey ? '***masked***' : 'empty' });
       this.currentProvider = provider;
       
       // Configure the LLM service
       const success = await this.llmService.configure(provider, apiKey);
+      console.log('🔧 LLM Configuration result:', success);
       
       if (success) {
         llmActions.updateConfig({
@@ -103,11 +192,13 @@ class QTIGeneratorService {
           apiKey,
           isConfigured: true
         });
+        console.log('✅ LLM configured successfully');
         return { success: true };
       } else {
-        throw new Error('Failed to configure LLM provider');
+        throw new Error('Fallo al configurar el proveedor de LLM');
       }
     } catch (error) {
+      console.error('❌ LLM configuration failed:', error);
       llmActions.setError(error.message);
       return { success: false, error: error.message };
     }
@@ -147,17 +238,15 @@ class QTIGeneratorService {
   }
   
   async extractPDFText(buffer) {
-    // Use the existing PDF extraction logic
-    const PDFExtractor = require('../pdf-extractor');
-    const pdfExtractor = new PDFExtractor();
-    
-    const result = await pdfExtractor.extractText(buffer);
+    // Use the PDF extractor instance
+    const result = await this.pdfExtractor.extractText(buffer);
     return result;
   }
   
   // Question Generation
   async generateQuestions(params) {
     try {
+      console.log('🤖 Starting question generation with params:', params);
       llmActions.setGenerating(true);
       llmActions.clearError();
       
@@ -169,17 +258,22 @@ class QTIGeneratorService {
         includeMath
       } = params;
       
+      console.log('🔧 LLM Service configured:', this.llmService.isConfigured);
+      
       // Use the existing LLM service to generate questions
       const generatedQuestions = await this.llmService.generateQuestions({
-        context: contextText,
+        contextText,
         questionCount,
-        difficulty: difficultyLevel,
+        difficultyLevel,
         questionTypes,
         includeMath
       });
       
+      console.log('✅ Generated questions:', generatedQuestions);
+      
       // Add generated questions to assessment
       generatedQuestions.forEach(question => {
+        console.log('➕ Adding question:', question);
         assessmentActions.addQuestion(question);
       });
       
@@ -187,7 +281,9 @@ class QTIGeneratorService {
       
       return { success: true, questions: generatedQuestions };
     } catch (error) {
+      console.error('❌ Question generation failed:', error);
       llmActions.setError(error.message);
+      llmActions.setGenerating(false);
       return { success: false, error: error.message };
     }
   }

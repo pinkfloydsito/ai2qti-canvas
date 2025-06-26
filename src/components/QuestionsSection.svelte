@@ -1,6 +1,7 @@
 <script>
   import { assessmentStore, assessmentActions } from '../stores/assessment.js';
   import QuestionItem from './QuestionItem.svelte';
+  import { t } from '../stores/localization.js';
   
   let assessment = $assessmentStore;
   let selectedQuestionType = 'multiple_choice';
@@ -10,12 +11,12 @@
     assessment = value;
   });
   
-  const questionTypes = [
-    { value: 'multiple_choice', label: 'Multiple Choice' },
-    { value: 'true_false', label: 'True/False' },
-    { value: 'short_answer', label: 'Short Answer' },
-    { value: 'essay', label: 'Essay' },
-    { value: 'fill_in_blank', label: 'Fill in the Blank' }
+  $: questionTypes = [
+    { value: 'multiple_choice', label: $t('aiGeneration.typeLabels.multipleChoice') },
+    { value: 'true_false', label: $t('aiGeneration.typeLabels.trueFalse') },
+    { value: 'short_answer', label: $t('aiGeneration.typeLabels.shortAnswer') },
+    { value: 'essay', label: $t('aiGeneration.typeLabels.essay') },
+    { value: 'fill_in_blank', label: 'Llenar el Espacio' }
   ];
   
   function addQuestion() {
@@ -44,7 +45,7 @@
 
 <section class="questions-section">
   <div class="questions-header">
-    <h2>Questions ({assessment.questions.length})</h2>
+    <h2>{$t('questions.title')} ({assessment.questions.length})</h2>
     <div class="question-controls">
       <select bind:value={selectedQuestionType}>
         {#each questionTypes as type}
@@ -52,7 +53,7 @@
         {/each}
       </select>
       <button class="btn btn-primary" on:click={addQuestion}>
-        Add Question
+        {$t('questions.addQuestion')}
       </button>
     </div>
   </div>
@@ -61,8 +62,8 @@
     {#if assessment.questions.length === 0}
       <div class="empty-state">
         <div class="empty-icon">📝</div>
-        <h3>No Questions Yet</h3>
-        <p>Add your first question using the controls above, or generate questions with AI.</p>
+        <h3>Aún No Hay Preguntas</h3>
+        <p>Agrega tu primera pregunta usando los controles de arriba, o genera preguntas con IA.</p>
       </div>
     {:else}
       {#each assessment.questions as question, index (question.id)}

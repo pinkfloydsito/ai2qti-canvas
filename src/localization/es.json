@@ -86,7 +86,9 @@
       "apiSetupError": "Error configurando el proveedor de API: {error}",
       "generationError": "Error generando preguntas: {error}",
       "apiKeyInvalid": "La clave API es inválida",
-      "apiKeyError": "Error validando la clave API"
+      "apiKeyError": "Error validando la clave API",
+      "noQuestions": "Por favor agrega al menos una pregunta antes de exportar.",
+      "xmlValidationError": "La validación XML falló: {error}. Por favor revisa tu contenido para caracteres especiales."
     },
     "validation": {
       "apiKeyValid": "La clave API es válida",

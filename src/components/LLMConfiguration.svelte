@@ -1,5 +1,6 @@
 <script>
   import { llmStore, llmActions } from '../stores/llm.js';
+  import { t } from '../stores/localization.js';
   
   let config = $llmStore;
   
@@ -9,25 +10,25 @@
   });
   
   // Provider options with help links
-  const providers = [
+  $: providers = [
     { 
       value: 'gemini', 
-      label: 'Google Gemini (Recommended)', 
+      label: 'Google Gemini (Recomendado)', 
       helpLink: 'https://makersuite.google.com/app/apikey' 
     },
     { 
       value: 'mistral', 
-      label: 'Mistral AI (Free)', 
+      label: 'Mistral AI (Gratis)', 
       helpLink: 'https://console.mistral.ai/' 
     },
     { 
       value: 'deepseek', 
-      label: 'DeepSeek (Math-focused)', 
+      label: 'DeepSeek (Enfoque Matemático)', 
       helpLink: 'https://platform.deepseek.com/api_keys' 
     },
     { 
       value: 'huggingface', 
-      label: 'Hugging Face (Free)', 
+      label: 'Hugging Face (Gratis)', 
       helpLink: 'https://huggingface.co/settings/tokens' 
     }
   ];
@@ -46,16 +47,41 @@
       provider: config.provider,
       apiKey: newApiKey 
     });
+    
+    // Auto-configure when API key is entered
+    if (newApiKey.trim().length > 0) {
+      configureLLM(config.provider, newApiKey);
+    }
+  }
+  
+  async function configureLLM(provider, apiKey) {
+    try {
+      console.log('🔧 LLMConfiguration: Configuring LLM...', { provider, hasApiKey: !!apiKey });
+      // Import the service dynamically to avoid circular imports
+      const { qtiGenerator } = await import('../services/qti-generator.js');
+      const result = await qtiGenerator.configureLLM(provider, apiKey);
+      
+      console.log('🔧 LLMConfiguration: Configuration result:', result);
+      if (result.success) {
+        console.log('✅ LLMConfiguration: LLM configured successfully');
+      } else {
+        console.error('❌ LLMConfiguration: Configuration failed:', result.error);
+        llmActions.setError(result.error);
+      }
+    } catch (error) {
+      console.error('❌ LLMConfiguration: Exception during configuration:', error);
+      llmActions.setError(error.message);
+    }
   }
   
   $: currentProvider = providers.find(p => p.value === config.provider);
 </script>
 
 <section class="settings-section">
-  <h2>LLM Configuration</h2>
+  <h2>{$t('settings.title')}</h2>
   <div class="settings-controls">
     <div class="form-group">
-      <label for="llmProvider">LLM Provider:</label>
+      <label for="llmProvider">{$t('settings.provider')}</label>
       <select 
         id="llmProvider" 
         value={config.provider} 
@@ -68,17 +94,17 @@
     </div>
     
     <div class="form-group">
-      <label for="apiKey">API Key:</label>
+      <label for="apiKey">{$t('settings.apiKey')}</label>
       <input 
         type="password" 
         id="apiKey" 
-        placeholder="Enter your API key"
+        placeholder={$t('settings.apiKeyPlaceholder')}
         value={config.apiKey}
         on:input={handleApiKeyChange}
       />
       {#if currentProvider}
         <small>
-          Get your free API key from 
+          Obtén tu clave API gratuita desde 
           <a href={currentProvider.helpLink} target="_blank" rel="noopener noreferrer">
             {currentProvider.label.split(' ')[0]} {currentProvider.label.includes('Google') ? 'AI Studio' : 'API Console'}
           </a>
@@ -95,7 +121,7 @@
     
     {#if config.isConfigured}
       <div class="success-message">
-        ✅ LLM provider configured successfully
+        ✅ Proveedor de LLM configurado exitosamente
       </div>
     {/if}
   </div>
