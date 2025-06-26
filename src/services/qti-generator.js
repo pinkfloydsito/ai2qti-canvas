@@ -8,9 +8,48 @@ import { BrowserLLMService } from './browser-llm-service.js';
 // Browser-compatible LaTeX renderer
 class BrowserLaTeXRenderer {
   renderMath(text) {
-    // For now, just return the text as-is
-    // In a real implementation, you'd use KaTeX in the browser
-    return text;
+    if (!text) return '';
+
+    // Regex to find LaTeX math: inline ($...$) or display ($...$)
+    const latexRegex = /(\$\$[\s\S]*?\$\$|\$[^\$]*?\$)/g;
+    let lastIndex = 0;
+    let html = '';
+
+    text.replace(latexRegex, (match, latex, offset) => {
+      // Add preceding non-LaTeX text
+      html += text.substring(lastIndex, offset);
+
+      const isDisplayMode = latex.startsWith('$') && latex.endsWith('$');
+      const latexContent = latex.substring(isDisplayMode ? 2 : 1, latex.length - (isDisplayMode ? 2 : 1)).trim();
+      
+      // Generate a simple hash for the src attribute (in a real app, this would be a server-generated image URL)
+      const srcHash = btoa(latexContent).substring(0, 16); 
+      const imageUrl = `https://aulavirtual.espol.edu.ec/equation_images/${srcHash}`; // Placeholder URL
+
+      const style = isDisplayMode ? 'display: block; margin-left: auto; margin-right: auto;' : '';
+      const cls = 'equation_image';
+      const title = this._escapeHtmlAttribute(latexContent);
+      const alt = `LaTeX: ${this._escapeHtmlAttribute(latexContent)}`;
+      const dataEquationContent = this._escapeHtmlAttribute(latexContent);
+
+      html += `<img class="${cls}" style="${style}" title="${title}" src="${imageUrl}" alt="${alt}" data-equation-content="${dataEquationContent}">`;
+      
+      lastIndex = offset + match.length;
+      return match; // Return match to satisfy replace callback, but we build html separately
+    });
+
+    html += text.substring(lastIndex); // Add any remaining text after the last LaTeX
+    return html;
+  }
+
+  _escapeHtmlAttribute(text) {
+    if (!text) return '';
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
   
   previewMath(inputText, previewElement) {
@@ -62,7 +101,7 @@ class BrowserQTIExporter {
       </itemmetadata>
       <presentation>
         <material>
-          <mattext texttype="text/html">${this.escapeXML(question.text)}</mattext>
+          <mattext texttype="text/html">&lt;div&gt;${this.escapeXML(this.latexRenderer.renderMath(question.text))}&lt;/div&gt;</mattext>
         </material>
         ${this.generateResponseXML(question)}
       </presentation>
@@ -77,7 +116,7 @@ class BrowserQTIExporter {
           ${question.choices.map((choice, index) => `
             <response_label ident="${index}">
               <material>
-                <mattext texttype="text/html">${this.escapeXML(choice.text)}</mattext>
+                <mattext texttype="text/html">&lt;p&gt;${this.escapeXML(this.latexRenderer.renderMath(choice.text))}&lt;/p&gt;</mattext>
               </material>
             </response_label>
           `).join('')}

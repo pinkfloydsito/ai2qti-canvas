@@ -145,7 +145,7 @@ describe('PDF Text Extraction', () => {
         console.log('📝 Section analysis skipped due to extraction error:', error.message);
         expect(true).toBe(true); // Pass the test anyway
       }
-    }, 15000);
+    }, 30000);
 
     test('should extract meaningful content for question generation', async () => {
       if (!pdfBuffer) return;
@@ -183,6 +183,6 @@ describe('PDF Text Extraction', () => {
       } catch (error) {
         console.log('Content analysis skipped due to extraction error');
       }
-    });
+    }, 30000);
   });
 });

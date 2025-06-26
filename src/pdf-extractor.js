@@ -69,7 +69,7 @@ class PDFExtractor {
     async electronOptimizedParse(pdfBuffer) {
         try {
             console.log('Attempting Electron-optimized PDF extraction...');
-            
+
             // Apply the GitHub issue fix for pdf-parse
             const parseOptions = {
                 normalizeWhitespace: true,
@@ -77,7 +77,7 @@ class PDFExtractor {
                 max: 0, // No page limit
                 version: 'v1.10.100', // Use older version
             };
-            
+
             // Set up the worker properly as suggested in the GitHub issue
             try {
                 const pdfjs = require('pdfjs-dist/legacy/build/pdf');
@@ -85,23 +85,19 @@ class PDFExtractor {
                 pdfjs.GlobalWorkerOptions.workerSrc = PDFJSWorker;
             } catch (workerSetupError) {
                 // If worker setup fails, disable workers
-                console.warn('Worker setup failed in electron parse, disabling workers');
-                if (typeof global !== 'undefined') {
-                    global.PDFJS = global.PDFJS || {};
-                    global.PDFJS.workerSrc = false;
-                    global.PDFJS.disableWorker = true;
-                }
+                console.warn('Worker setup failed in electron parse, disabling workers and falling back to direct parse');
+                return this.directPDFJSParse(pdfBuffer);
             }
-            
+
             // Try to load and configure pdf-parse for Electron
             const pdfParse = require('pdf-parse');
             const data = await pdfParse(pdfBuffer, parseOptions);
-            
+
             if (data && data.text && data.text.trim().length > 100) {
                 console.log(`Electron-optimized extraction successful: ${data.text.length} characters`);
                 return this.cleanupText(data.text);
             }
-            
+
             return null;
         } catch (error) {
             console.warn('Electron-optimized parse failed:', error.message);

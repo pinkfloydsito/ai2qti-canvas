@@ -1,49 +1,50 @@
 <script>
   import { createEventDispatcher } from 'svelte';
   import { t } from '../stores/localization.js';
-  
+  import Latex from './Latex.svelte';
+
   export let question;
   export let questionNumber;
-  
+
   const dispatch = createEventDispatcher();
-  
+
   function updateQuestion(updates) {
     dispatch('update', updates);
   }
-  
+
   function removeQuestion() {
     dispatch('remove');
   }
-  
+
   function handleTextChange(event) {
     updateQuestion({ text: event.target.value });
   }
-  
+
   function handlePointsChange(event) {
     updateQuestion({ points: parseInt(event.target.value) || 0 });
   }
-  
+
   function handleCorrectAnswerChange(event) {
     updateQuestion({ correctAnswer: event.target.value });
   }
-  
+
   function addChoice() {
     const newChoices = [...(question.choices || []), { text: '', correct: false }];
     updateQuestion({ choices: newChoices });
   }
-  
+
   function removeChoice(index) {
     const newChoices = question.choices.filter((_, i) => i !== index);
     updateQuestion({ choices: newChoices });
   }
-  
+
   function updateChoice(index, text) {
-    const newChoices = question.choices.map((choice, i) => 
+    const newChoices = question.choices.map((choice, i) =>
       i === index ? { ...choice, text } : choice
     );
     updateQuestion({ choices: newChoices });
   }
-  
+
   function setCorrectChoice(index) {
     const newChoices = question.choices.map((choice, i) => ({
       ...choice,
@@ -51,7 +52,7 @@
     }));
     updateQuestion({ choices: newChoices, correctAnswer: index });
   }
-  
+
   $: questionTypeLabel = question.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
 </script>
 
@@ -65,49 +66,36 @@
       ×
     </button>
   </div>
-  
+
   <div class="question-content">
     <div class="form-group">
       <label>{$t('questions.questionText')}</label>
-      <textarea 
-        class="question-text" 
-        placeholder="{$t('questions.questionTextPlaceholder')}"
-        value={question.text}
-        on:input={handleTextChange}
-        rows="3"
-      ></textarea>
-      <!-- TODO: Add math preview -->
+      <Latex value={question.text} on:input={(e) => updateQuestion({ text: e.detail })} />
     </div>
-    
+
     <div class="form-group">
       <label>{$t('questions.points')}</label>
-      <input 
-        type="number" 
-        class="question-points" 
-        value={question.points || 0} 
+      <input
+        type="number"
+        class="question-points"
+        value={question.points || 0}
         min="0"
         on:input={handlePointsChange}
       />
     </div>
-    
+
     {#if question.type === 'multiple_choice'}
       <div class="choices-container">
         <label>{$t('questions.choices')}</label>
         {#each question.choices || [] as choice, index}
           <div class="choice-item">
-            <input 
-              type="radio" 
-              name="correct-choice-{question.id}" 
+            <input
+              type="radio"
+              name="correct-choice-{question.id}"
               checked={choice.correct}
               on:change={() => setCorrectChoice(index)}
             />
-            <input 
-              type="text" 
-              class="choice-text" 
-              placeholder="{$t('questions.choicePlaceholder')} {String.fromCharCode(65 + index)} (LaTeX soportado)"
-              value={choice.text}
-              on:input={(e) => updateChoice(index, e.target.value)}
-            />
+            <Latex value={choice.text} on:input={(e) => updateChoice(index, e.detail)} />
             {#if question.choices.length > 2}
               <button class="btn-remove-choice" on:click={() => removeChoice(index)}>×</button>
             {/if}
@@ -116,11 +104,11 @@
         <button class="btn-add-choice" on:click={addChoice}>{$t('questions.addChoice')}</button>
       </div>
     {/if}
-    
+
     {#if question.type === 'true_false'}
       <div class="form-group">
         <label>{$t('questions.correctAnswer')}</label>
-        <select 
+        <select
           class="correct-answer"
           value={question.correctAnswer || 'true'}
           on:change={handleCorrectAnswerChange}
@@ -130,25 +118,19 @@
         </select>
       </div>
     {/if}
-    
+
     {#if question.type === 'short_answer'}
       <div class="form-group">
         <label>{$t('questions.sampleAnswer')}</label>
-        <textarea 
-          class="sample-answer" 
-          placeholder="Ingresa una respuesta de ejemplo para referencia de calificación"
-          value={question.sampleAnswer || ''}
-          on:input={(e) => updateQuestion({ sampleAnswer: e.target.value })}
-          rows="2"
-        ></textarea>
+        <Latex value={question.sampleAnswer} on:input={(e) => updateQuestion({ sampleAnswer: e.detail })} />
       </div>
     {/if}
-    
+
     {#if question.type === 'essay'}
       <div class="form-group">
         <label>{$t('questions.gradingRubric')}</label>
-        <textarea 
-          class="grading-rubric" 
+        <textarea
+          class="grading-rubric"
           placeholder="Ingresa criterios de calificación"
           value={question.gradingRubric || ''}
           on:input={(e) => updateQuestion({ gradingRubric: e.target.value })}
@@ -167,7 +149,7 @@
     overflow: hidden;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
-  
+
   .question-header {
     background: #f8f9fa;
     padding: 15px 20px;
@@ -176,18 +158,18 @@
     justify-content: space-between;
     align-items: center;
   }
-  
+
   .question-info {
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  
+
   .question-number {
     font-weight: 600;
     color: #495057;
   }
-  
+
   .question-type {
     background: #007bff;
     color: white;
@@ -196,7 +178,7 @@
     font-size: 12px;
     font-weight: 500;
   }
-  
+
   .btn-remove {
     background: #dc3545;
     color: white;
@@ -211,41 +193,41 @@
     justify-content: center;
     transition: background-color 0.2s;
   }
-  
+
   .btn-remove:hover {
     background: #c82333;
   }
-  
+
   .question-content {
     padding: 20px;
   }
-  
+
   .choices-container {
     margin-top: 15px;
   }
-  
+
   .choices-container label {
     display: block;
     margin-bottom: 10px;
     font-weight: 500;
   }
-  
+
   .choice-item {
     display: flex;
     align-items: center;
     gap: 10px;
     margin-bottom: 10px;
   }
-  
+
   .choice-item input[type="radio"] {
     width: auto;
     margin: 0;
   }
-  
+
   .choice-text {
     flex: 1;
   }
-  
+
   .btn-remove-choice {
     background: #6c757d;
     color: white;
@@ -259,11 +241,11 @@
     align-items: center;
     justify-content: center;
   }
-  
+
   .btn-remove-choice:hover {
     background: #545b62;
   }
-  
+
   .btn-add-choice {
     background: #28a745;
     color: white;
@@ -274,31 +256,31 @@
     font-size: 14px;
     margin-top: 5px;
   }
-  
+
   .btn-add-choice:hover {
     background: #218838;
   }
-  
+
   .question-text,
   .sample-answer,
   .grading-rubric {
     min-height: 60px;
     resize: vertical;
   }
-  
+
   @media (max-width: 768px) {
     .question-header {
       padding: 10px 15px;
     }
-    
+
     .question-content {
       padding: 15px;
     }
-    
+
     .choice-item {
       flex-wrap: wrap;
     }
-    
+
     .choice-text {
       min-width: 200px;
     }
