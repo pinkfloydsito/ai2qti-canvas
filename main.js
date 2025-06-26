@@ -1,6 +1,10 @@
-const { app, BrowserWindow, Menu, dialog, ipcMain } = require('electron');
-const path = require('path');
-const fs = require('fs');
+import { app, BrowserWindow, Menu, dialog, ipcMain } from 'electron';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 let mainWindow;
 
@@ -9,16 +13,21 @@ function createWindow() {
     width: 1200,
     height: 800,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js')
     },
     icon: path.join(__dirname, 'assets/icon.png')
   });
 
-  mainWindow.loadFile('renderer.html');
-
-  if (process.argv.includes('--dev')) {
+  // Check if we're in development mode
+  const isDev = process.env.NODE_ENV === 'development' || process.argv.includes('--dev');
+  
+  if (isDev) {
+    mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
+  } else {
+    mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
   }
 
   mainWindow.on('closed', () => {

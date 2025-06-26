@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
   testMatch: [
@@ -6,8 +6,9 @@ module.exports = {
     '<rootDir>/tests/**/*.spec.js'
   ],
   collectCoverageFrom: [
-    'renderer.js',
     'main.js',
+    'src/**/*.js',
+    '!src/**/*.svelte',
     '!node_modules/**',
     '!tests/**'
   ],

@@ -150,6 +150,11 @@ class LaTeXRenderer {
         
         let processed = text;
         
+        // Skip processing if text already contains img tags to prevent nesting
+        if (processed.includes('<img')) {
+            return processed;
+        }
+        
         // Canvas LMS expects LaTeX in img tags with equation_image class
         // Convert display math ($$...$$) to Canvas-compatible format
         processed = processed.replace(/\$\$(.*?)\$\$/g, (match, latex) => {
@@ -157,7 +162,7 @@ class LaTeXRenderer {
             const encodedLatex = this.encodeLatexForCanvas(cleanLatex);
             const baseUrl = 'https://aulavirtual.espol.edu.ec/equation_images/';
             
-            return `<img class="equation_image" style="display: block; margin-left: auto; margin-right: auto;" title="${cleanLatex}" src="${baseUrl}${encodedLatex}" alt="LaTeX: ${cleanLatex}" data-equation-content="${cleanLatex}">`;
+            return `<img class="equation_image" style="display: block; margin-left: auto; margin-right: auto;" title="${cleanLatex}" src="${baseUrl}${encodedLatex}" alt="LaTeX: ${cleanLatex}" data-equation-content="${cleanLatex}" />`;
         });
         
         // Convert inline math ($...$) to Canvas-compatible format  
@@ -166,7 +171,7 @@ class LaTeXRenderer {
             const encodedLatex = this.encodeLatexForCanvas(cleanLatex);
             const baseUrl = 'https://aulavirtual.espol.edu.ec/equation_images/';
             
-            return `<img class="equation_image" title="${cleanLatex}" src="${baseUrl}${encodedLatex}" alt="LaTeX: ${cleanLatex}" data-equation-content="${cleanLatex}">`;
+            return `<img class="equation_image" title="${cleanLatex}" src="${baseUrl}${encodedLatex}" alt="LaTeX: ${cleanLatex}" data-equation-content="${cleanLatex}" />`;
         });
         
         return processed;
