@@ -21,9 +21,9 @@ class BrowserLaTeXRenderer {
 
       const isDisplayMode = latex.startsWith('$') && latex.endsWith('$');
       const latexContent = latex.substring(isDisplayMode ? 2 : 1, latex.length - (isDisplayMode ? 2 : 1)).trim();
-      
+
       // Generate a simple hash for the src attribute (in a real app, this would be a server-generated image URL)
-      const srcHash = btoa(latexContent).substring(0, 16); 
+      const srcHash = btoa(latexContent).substring(0, 16);
       const imageUrl = `https://aulavirtual.espol.edu.ec/equation_images/${srcHash}`; // Placeholder URL
 
       const style = isDisplayMode ? 'display: block; margin-left: auto; margin-right: auto;' : '';
@@ -33,7 +33,7 @@ class BrowserLaTeXRenderer {
       const dataEquationContent = this._escapeHtmlAttribute(latexContent);
 
       html += `<img class="${cls}" style="${style}" title="${title}" src="${imageUrl}" alt="${alt}" data-equation-content="${dataEquationContent}">`;
-      
+
       lastIndex = offset + match.length;
       return match; // Return match to satisfy replace callback, but we build html separately
     });
@@ -51,7 +51,7 @@ class BrowserLaTeXRenderer {
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
   }
-  
+
   previewMath(inputText, previewElement) {
     if (previewElement) {
       previewElement.textContent = inputText;
@@ -64,7 +64,7 @@ class BrowserQTIExporter {
   generateQTI(assessment) {
     const assessmentId = this.generateId();
     const timestamp = new Date().toISOString();
-    
+
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <questestinterop xmlns="http://www.imsglobal.org/xsd/ims_qtiasiv1p2">
   <assessment ident="${assessmentId}" title="${this.escapeXML(assessment.title)}">
@@ -79,13 +79,13 @@ class BrowserQTIExporter {
     </section>
   </assessment>
 </questestinterop>`;
-    
+
     return xml;
   }
 
   generateQuestionXML(question, index) {
     const questionId = this.generateId();
-    
+
     return `<item ident="${questionId}" title="Pregunta ${index + 1}">
       <itemmetadata>
         <qtimetadata>
@@ -177,15 +177,6 @@ class BrowserQTIExporter {
   }
 }
 
-// Browser-compatible PDF extractor
-class BrowserPDFExtractor {
-  async extractText(buffer) {
-    // For demo purposes, return placeholder text
-    // In a real implementation, you'd use PDF.js
-    return "Texto extraído del PDF de ejemplo. Esta es una funcionalidad de demostración.";
-  }
-}
-
 // The real LLM service is now imported from browser-llm-service.js
 
 class QTIGeneratorService {
@@ -193,10 +184,10 @@ class QTIGeneratorService {
     this.llmService = new BrowserLLMService();
     this.qtiExporter = new BrowserQTIExporter();
     this.latexRenderer = new BrowserLaTeXRenderer();
-    this.pdfExtractor = new BrowserPDFExtractor();
+    this.pdfExtractor = window.pdfAPI;
     this.currentProvider = 'gemini';
     this.initialized = true;
-    
+
     // Cleanup on page unload
     if (typeof window !== 'undefined') {
       window.addEventListener('beforeunload', () => {
@@ -204,27 +195,27 @@ class QTIGeneratorService {
       });
     }
   }
-  
+
   async ensureInitialized() {
     return true; // Always initialized now
   }
-  
+
   destroy() {
     if (this.llmService) {
       this.llmService.destroy();
     }
   }
-  
+
   // LLM Configuration
   async configureLLM(provider, apiKey) {
     try {
       console.log('🔧 Configuring LLM:', { provider, apiKey: apiKey ? '***masked***' : 'empty' });
       this.currentProvider = provider;
-      
+
       // Configure the LLM service
       const success = await this.llmService.configure(provider, apiKey);
       console.log('🔧 LLM Configuration result:', success);
-      
+
       if (success) {
         llmActions.updateConfig({
           provider,
@@ -242,53 +233,52 @@ class QTIGeneratorService {
       return { success: false, error: error.message };
     }
   }
-  
+
   // PDF Processing
   async processPDF(file) {
     try {
       aiGenerationActions.setExtracting(true, 0);
-      
+
       // Convert file to buffer for processing
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
-      
+
       // Update progress
       aiGenerationActions.setExtracting(true, 25);
-      
+
       // Extract text using existing PDF extraction logic
       const extractedText = await this.extractPDFText(buffer);
-      
+
       // Update progress
       aiGenerationActions.setExtracting(true, 100);
-      
+
       // Update store with extracted text
       aiGenerationActions.updateParams({ contextText: extractedText });
-      
+
       // Clear extraction state
       setTimeout(() => {
         aiGenerationActions.setExtracting(false, 0);
       }, 500);
-      
+
       return { success: true, text: extractedText };
     } catch (error) {
       aiGenerationActions.setExtracting(false, 0);
       throw error;
     }
   }
-  
+
   async extractPDFText(buffer) {
-    // Use the PDF extractor instance
     const result = await this.pdfExtractor.extractText(buffer);
     return result;
   }
-  
+
   // Question Generation
   async generateQuestions(params) {
     try {
       console.log('🤖 Starting question generation with params:', params);
       llmActions.setGenerating(true);
       llmActions.clearError();
-      
+
       const {
         contextText,
         questionCount,
@@ -296,9 +286,9 @@ class QTIGeneratorService {
         questionTypes,
         includeMath
       } = params;
-      
+
       console.log('🔧 LLM Service configured:', this.llmService.isConfigured);
-      
+
       // Use the existing LLM service to generate questions
       const generatedQuestions = await this.llmService.generateQuestions({
         contextText,
@@ -307,17 +297,17 @@ class QTIGeneratorService {
         questionTypes,
         includeMath
       });
-      
+
       console.log('✅ Generated questions:', generatedQuestions);
-      
+
       // Add generated questions to assessment
       generatedQuestions.forEach(question => {
         console.log('➕ Adding question:', question);
         assessmentActions.addQuestion(question);
       });
-      
+
       llmActions.setGenerating(false);
-      
+
       return { success: true, questions: generatedQuestions };
     } catch (error) {
       console.error('❌ Question generation failed:', error);
@@ -326,12 +316,12 @@ class QTIGeneratorService {
       return { success: false, error: error.message };
     }
   }
-  
+
   // Assessment Operations
   newAssessment() {
     assessmentActions.clearAssessment();
   }
-  
+
   async saveAssessment(assessment) {
     try {
       // Use Electron's file system to save
@@ -339,7 +329,7 @@ class QTIGeneratorService {
         const result = await window.electronAPI.saveAssessment(assessment);
         return result;
       }
-      
+
       // Fallback: download as JSON
       this.downloadAsJSON(assessment, 'assessment.json');
       return { success: true };
@@ -347,24 +337,24 @@ class QTIGeneratorService {
       throw new Error(`Failed to save assessment: ${error.message}`);
     }
   }
-  
+
   async exportQTI(assessment) {
     try {
       // Generate QTI XML
       const qtiXML = this.qtiExporter.generateQTI(assessment);
-      
+
       // Validate the XML
       const validation = this.qtiExporter.validateXML(qtiXML);
       if (!validation.isValid) {
         throw new Error(`Invalid QTI XML: ${validation.errors.join(', ')}`);
       }
-      
+
       // Save or download the QTI file
       if (typeof window !== 'undefined' && window.electronAPI) {
         const result = await window.electronAPI.exportQTI(qtiXML);
         return result;
       }
-      
+
       // Fallback: download as XML
       this.downloadAsFile(qtiXML, 'assessment.xml', 'application/xml');
       return { success: true };
@@ -372,18 +362,18 @@ class QTIGeneratorService {
       throw new Error(`Failed to export QTI: ${error.message}`);
     }
   }
-  
+
   // Utility methods
   downloadAsJSON(data, filename) {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     this.downloadBlob(blob, filename);
   }
-  
+
   downloadAsFile(content, filename, mimeType) {
     const blob = new Blob([content], { type: mimeType });
     this.downloadBlob(blob, filename);
   }
-  
+
   downloadBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -394,12 +384,12 @@ class QTIGeneratorService {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }
-  
+
   // LaTeX rendering
   renderMath(text) {
     return this.latexRenderer.renderMath(text);
   }
-  
+
   previewMath(inputText, previewElement) {
     return this.latexRenderer.previewMath(inputText, previewElement);
   }

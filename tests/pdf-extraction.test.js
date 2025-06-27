@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const PDFExtractor = require('../src/pdf-extractor');
+const PDFExtractor = require('../src/pdf-extractor').default;
 
 describe('PDF Text Extraction', () => {
   let pdfBuffer;

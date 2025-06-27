@@ -1,4 +1,4 @@
-const LaTeXRenderer = require('./latex-renderer');
+import LaTeXRenderer from './latex-renderer.js';
 
 /**
  * QTI Exporter - Handles QTI XML generation and validation

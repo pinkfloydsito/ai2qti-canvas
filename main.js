@@ -3,6 +3,9 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 
+import PDFExtractor from './src/pdf-extractor.js';
+const extractor = new PDFExtractor();
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -22,7 +25,7 @@ function createWindow() {
 
   // Check if we're in development mode
   const isDev = process.env.NODE_ENV === 'development' || process.argv.includes('--dev');
-  
+
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
@@ -57,7 +60,7 @@ function createMenu() {
                 { name: 'JSON Files', extensions: ['json'] }
               ]
             });
-            
+
             if (!result.canceled) {
               mainWindow.webContents.send('open-assessment', result.filePaths[0]);
             }
@@ -136,7 +139,7 @@ ipcMain.handle('save-file', async (event, data, defaultPath) => {
       return { success: false, error: error.message };
     }
   }
-  
+
   return { success: false, canceled: true };
 });
 
@@ -164,7 +167,7 @@ ipcMain.handle('export-qti', async (event, qtiXML) => {
       fs.writeFileSync(result.filePath, qtiXML);
       return { success: true, filePath: result.filePath };
     }
-    
+
     return { success: false, canceled: true };
   } catch (error) {
     return { success: false, error: error.message };
@@ -185,7 +188,7 @@ ipcMain.handle('save-assessment', async (event, assessmentData) => {
       fs.writeFileSync(result.filePath, JSON.stringify(assessmentData, null, 2));
       return { success: true, filePath: result.filePath };
     }
-    
+
     return { success: false, canceled: true };
   } catch (error) {
     return { success: false, error: error.message };
@@ -201,13 +204,13 @@ ipcMain.handle('load-assessment', async (event) => {
         { name: 'JSON Files', extensions: ['json'] }
       ]
     });
-    
+
     if (!result.canceled && result.filePaths.length > 0) {
       const data = fs.readFileSync(result.filePaths[0], 'utf8');
       const assessment = JSON.parse(data);
       return { success: true, assessment };
     }
-    
+
     return { success: false, canceled: true };
   } catch (error) {
     return { success: false, error: error.message };
@@ -223,16 +226,30 @@ ipcMain.handle('select-pdf-file', async (event) => {
         { name: 'PDF Files', extensions: ['pdf'] }
       ]
     });
-    
+
     if (!result.canceled && result.filePaths.length > 0) {
       return { success: true, filePath: result.filePaths[0] };
     }
-    
+
     return { success: false, canceled: true };
   } catch (error) {
     return { success: false, error: error.message };
   }
 });
+
+ipcMain.handle('extract-pdf-text', async (_, arrayBuffer) => {
+  try {
+    const buffer = Buffer.from(arrayBuffer);
+    console.log('Extracting text from PDF buffer of size:', buffer.length);
+    return await extractor.extractText(buffer);
+  } catch (error) {
+    console.error('PDF extraction failed:', error);
+    return { error: error.message };
+  }
+});
+
+
+
 
 app.whenReady().then(() => {
   createWindow();
