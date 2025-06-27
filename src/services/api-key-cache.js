@@ -220,4 +220,4 @@ class ApiKeyCache {
     }
 }
 
-module.exports = ApiKeyCache;
+export default ApiKeyCache;

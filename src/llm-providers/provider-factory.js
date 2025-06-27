@@ -1,7 +1,7 @@
-const GeminiProvider = require('./gemini-provider');
-const MistralProvider = require('./mistral-provider');
-const DeepSeekProvider = require('./deepseek-provider');
-const HuggingFaceProvider = require('./huggingface-provider');
+import GeminiProvider from './gemini-provider.js';
+import MistralProvider from './mistral-provider.js';
+import DeepSeekProvider from './deepseek-provider.js';
+import HuggingFaceProvider from './huggingface-provider.js';
 
 /**
  * Factory class for creating LLM providers
@@ -154,4 +154,5 @@ class ProviderFactory {
 }
 
 // Export singleton instance
-module.exports = new ProviderFactory();
+const providerFactory = new ProviderFactory();
+export default providerFactory;

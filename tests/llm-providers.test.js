@@ -1,9 +1,10 @@
-const ProviderFactory = require('../src/llm-providers/provider-factory');
-const GeminiProvider = require('../src/llm-providers/gemini-provider');
-const MistralProvider = require('../src/llm-providers/mistral-provider');
-const DeepSeekProvider = require('../src/llm-providers/deepseek-provider');
-const HuggingFaceProvider = require('../src/llm-providers/huggingface-provider');
-const BaseLLMProvider = require('../src/llm-providers/base-llm-provider');
+import ProviderFactory from '../src/llm-providers/provider-factory.js';
+import GeminiProvider from '../src/llm-providers/gemini-provider.js';
+import MistralProvider from '../src/llm-providers/mistral-provider.js';
+import DeepSeekProvider from '../src/llm-providers/deepseek-provider.js';
+import HuggingFaceProvider from '../src/llm-providers/huggingface-provider.js';
+import BaseLLMProvider from '../src/llm-providers/base-llm-provider.js';
+import JSONExtractor from '../src/llm-providers/json-extractor.js';
 
 describe('LLM Providers Architecture', () => {
     
@@ -154,26 +155,26 @@ describe('LLM Providers Architecture', () => {
             await expect(provider.configure('')).rejects.toThrow('API key is required for gemini provider');
         });
 
-        test('should extract JSON from response correctly', () => {
+        test('should extract JSON from response correctly using unified extractor', () => {
             const testResponse = '```json\n{"questions": [{"type": "multiple_choice", "text": "Test?"}]}\n```';
-            const result = provider.extractJSONFromResponse(testResponse);
+            const result = JSONExtractor.extractJSONFromResponse(testResponse, 'Gemini');
             const parsed = JSON.parse(result);
             
             expect(parsed.questions).toBeDefined();
             expect(parsed.questions[0].type).toBe('multiple_choice');
         });
 
-        test('should handle LaTeX in JSON responses', () => {
+        test('should handle LaTeX in JSON responses using unified extractor', () => {
             const testResponse = '{"questions": [{"text": "What is $\\\\frac{x}{2}$?"}]}';
-            const result = provider.extractJSONFromResponse(testResponse);
+            const result = JSONExtractor.extractJSONFromResponse(testResponse, 'Gemini');
             const parsed = JSON.parse(result);
             
             expect(parsed.questions[0].text).toContain('\\frac{x}{2}');
         });
 
-        test('should repair malformed JSON', () => {
+        test('should repair malformed JSON using unified extractor', () => {
             const malformedJson = '{"questions": [{"text": "Test"}]}'; // Valid JSON for test
-            const result = provider.extractJSONFromResponse(malformedJson);
+            const result = JSONExtractor.extractJSONFromResponse(malformedJson, 'Gemini');
             
             expect(() => JSON.parse(result)).not.toThrow();
         });
@@ -231,6 +232,58 @@ describe('LLM Providers Architecture', () => {
             
             // The provider should handle this type of error gracefully
             expect(testError.message).toContain('model not found');
+        });
+
+        test('should extract JSON from complex Game of Thrones response', () => {
+            
+            const gameOfThronesResponse = `Extracted JSON from response: {
+  "questions": [
+    {
+      "type": "multiple_choice",
+      "text": "What is the name of the Valyrian steel greatsword originally wielded by House Stark, later reforged into two smaller swords?",
+      "points": 2,
+      "choices": [
+        {"id": 0, "text": "Oathkeeper"},
+        {"id": 1, "text": "Longclaw"},
+        {"id": 2, "text": "Ice"},
+        {"id": 3, "text": "Heartsbane"}
+      ],
+      "correctAnswer": 2,
+      "explanation": "Ice was the ancestral Stark greatsword melted down by Tywin Lannister and reforged into Widow's Wail and Oathkeeper."
+    },
+    {
+      "type": "multiple_choice",
+      "text": "Which character orchestrated the Purple Wedding where Joffrey Baratheon was poisoned?",
+      "points": 2,
+      "choices": [
+        {"id": 0, "text": "Cersei Lannister"},
+        {"id": 1, "text": "Petyr Baelish"},
+        {"id": 2, "text": "Olenna Tyrell"},
+        {"id": 3, "text": "Tyrion Lannister"}
+      ],
+      "correctAnswer": 1,
+      "explanation": "Petyr Baelish conspired with Olenna Tyrell to poison Joffrey, though Olenna administered the poison while Baelish arranged Sansa's escape."
+    }
+  ]
+}`;
+
+            const result = JSONExtractor.extractJSONFromResponse(gameOfThronesResponse, 'DeepSeek');
+            const parsed = JSONExtractor.validateQuestionsStructure(result);
+            
+            expect(parsed.questions).toBeDefined();
+            expect(parsed.questions.length).toBe(2);
+            
+            // Test first question
+            expect(parsed.questions[0].type).toBe('multiple_choice');
+            expect(parsed.questions[0].text).toContain('Valyrian steel greatsword');
+            expect(parsed.questions[0].choices.length).toBe(4);
+            expect(parsed.questions[0].correctAnswer).toBe(2);
+            expect(parsed.questions[0].explanation).toContain('Ice was the ancestral');
+            
+            // Test second question
+            expect(parsed.questions[1].text).toContain('Purple Wedding');
+            expect(parsed.questions[1].correctAnswer).toBe(1);
+            expect(parsed.questions[1].explanation).toContain('Petyr Baelish');
         });
     });
 
@@ -349,22 +402,17 @@ describe('LLM Providers Architecture', () => {
             provider.isConfigured = true;
 
             // Mock a network error scenario
-            const fetch = require('node-fetch');
-            const originalFetch = fetch;
+            const originalFetch = global.fetch;
             
-            // Mock node-fetch to throw network error
-            jest.doMock('node-fetch', () => {
-                return jest.fn().mockRejectedValue(new Error('ENOTFOUND'));
-            });
+            // Mock fetch to throw network error
+            global.fetch = jest.fn().mockRejectedValue(new Error('ENOTFOUND'));
 
             await expect(provider.performGeneration('test')).rejects.toThrow(/models failed|network error/i);
         });
 
-        test('should validate JSON responses', () => {
-            const provider = new GeminiProvider();
-            
-            expect(() => provider.extractJSONFromResponse('Not JSON at all')).toThrow('No JSON object found in response');
-            expect(() => provider.extractJSONFromResponse('{"invalid": json}')).toThrow(/Invalid JSON format/);
+        test('should validate JSON responses using unified extractor', () => {
+            expect(() => JSONExtractor.extractJSONFromResponse('Not JSON at all', 'Test')).toThrow('No JSON object found in response');
+            expect(() => JSONExtractor.extractJSONFromResponse('{"invalid": json}', 'Test')).toThrow(/Invalid JSON format/);
         });
 
         test('should handle API rate limits', async () => {

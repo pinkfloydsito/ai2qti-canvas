@@ -10,7 +10,7 @@
  */
 
 // Base classes and interfaces
-const BaseLLMProvider = require('./base-llm-provider');
+import BaseLLMProvider from './base-llm-provider.js';
 const ProviderFactory = require('./provider-factory');
 
 // Provider implementations

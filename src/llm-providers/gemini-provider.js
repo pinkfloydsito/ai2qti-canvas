@@ -1,5 +1,6 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-const BaseLLMProvider = require('./base-llm-provider');
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import BaseLLMProvider from './base-llm-provider.js';
+import JSONExtractor from './json-extractor.js';
 
 /**
  * Google Gemini LLM Provider implementation
@@ -53,13 +54,9 @@ class GeminiProvider extends BaseLLMProvider {
 
                 console.log(`✅ ${currentModel} - Response received: ${text.length} characters`);
 
-                // Extract and parse JSON from response
-                const cleanText = this.extractJSONFromResponse(text);
-                const parsedQuestions = JSON.parse(cleanText);
-
-                if (!parsedQuestions.questions || !Array.isArray(parsedQuestions.questions)) {
-                    throw new Error('Invalid response format from Gemini API');
-                }
+                // Extract and parse JSON from response using unified extractor
+                const cleanText = JSONExtractor.extractJSONFromResponse(text, 'Gemini');
+                const parsedQuestions = JSONExtractor.validateQuestionsStructure(cleanText);
 
                 console.log(`✅ ${currentModel} - Successfully parsed ${parsedQuestions.questions.length} questions`);
                 return parsedQuestions.questions;
@@ -123,114 +120,6 @@ class GeminiProvider extends BaseLLMProvider {
         return false;
     }
 
-    extractJSONFromResponse(text) {
-        // Remove markdown code blocks
-        let cleaned = text.replace(/```json\s*|\s*```/g, '');
-
-        // Remove any text before the first { and after the last }
-        const firstBrace = cleaned.indexOf('{');
-        const lastBrace = cleaned.lastIndexOf('}');
-
-        if (firstBrace === -1 || lastBrace === -1) {
-            throw new Error('No JSON object found in response');
-        }
-
-        cleaned = cleaned.substring(firstBrace, lastBrace + 1);
-
-        // Fix LaTeX escape sequences that might be broken
-        cleaned = cleaned
-            .replace(/\\\\(\w+)/g, '\\\\$1') // Ensure double backslashes for LaTeX commands
-            .replace(/([^\\])\\([a-zA-Z])/g, '$1\\\\$2') // Fix single backslashes before letters
-            .replace(/\\\"/g, '\\\\"') // Fix escaped quotes
-            .replace(/^\s*["']?json["']?\s*/, '') // Remove leading "json"
-            .trim();
-
-        // Validate that we can parse it
-        try {
-            JSON.parse(cleaned);
-            return cleaned;
-        } catch (error) {
-            console.warn('Initial JSON parse failed, attempting repair...');
-
-            // Try to repair common JSON issues
-            const repaired = this.repairJSON(cleaned);
-
-            // Test the repair
-            try {
-                JSON.parse(repaired);
-                console.log('JSON repair successful');
-                return repaired;
-            } catch (repairError) {
-                console.error('JSON repair failed:', repairError.message);
-                throw new Error(`Invalid JSON format: ${error.message}`);
-            }
-        }
-    }
-
-    repairJSON(jsonStr) {
-        let repaired = jsonStr;
-
-        // Step 1: Fix LaTeX escape sequences systematically
-        repaired = this.fixLatexEscapes(repaired);
-
-        // Step 2: Fix other common JSON issues
-        repaired = repaired
-            // Fix line breaks within strings
-            .replace(/\\n/g, '\\\\n')
-            .replace(/\\t/g, '\\\\t')
-            // Fix unescaped quotes (but not already escaped ones)
-            .replace(/(?<!\\)\\(?!\\)/g, '\\\\')
-            // Clean up multiple backslashes
-            .replace(/\\\\+/g, '\\\\');
-
-        return repaired;
-    }
-
-    fixLatexEscapes(text) {
-        let fixed = text;
-
-        // Handle different LaTeX contexts
-        const latexPatterns = [
-            // Math expressions with single $
-            {
-                pattern: /\$([^$]*?)\$/g,
-                fix: (match, content) => {
-                    const fixedContent = this.escapeLatexInMath(content);
-                    return `$${fixedContent}$`;
-                }
-            },
-            // Math expressions with double $$
-            {
-                pattern: /\$\$([^$]*?)\$\$/g,
-                fix: (match, content) => {
-                    const fixedContent = this.escapeLatexInMath(content);
-                    return `$$${fixedContent}$$`;
-                }
-            }
-        ];
-
-        latexPatterns.forEach(({ pattern, fix }) => {
-            fixed = fixed.replace(pattern, fix);
-        });
-
-        return fixed;
-    }
-
-    escapeLatexInMath(mathContent) {
-        return mathContent
-            // Fix common LaTeX commands
-            .replace(/\\([a-zA-Z]+)/g, '\\\\$1')
-            // Fix specific symbols that need escaping
-            .replace(/\\(\{|\}|\[|\]|\|)/g, '\\\\$1')
-            // Fix already escaped sequences (avoid double escaping)
-            .replace(/\\\\\\\\([a-zA-Z]+)/g, '\\\\$1')
-            // Fix degree symbol specifically
-            .replace(/\\\\circ/g, '\\\\circ')
-            // Fix text commands
-            .replace(/\\\\text\{([^}]*)\}/g, '\\\\text{$1}')
-            // Fix fractions
-            .replace(/\\\\frac\{([^}]*)\}\{([^}]*)\}/g, '\\\\frac{$1}{$2}');
-    }
 }
 
-module.exports = GeminiProvider;
+export default GeminiProvider;

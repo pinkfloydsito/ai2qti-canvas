@@ -1,4 +1,5 @@
-const BaseLLMProvider = require('./base-llm-provider');
+import BaseLLMProvider from './base-llm-provider.js';
+import JSONExtractor from './json-extractor.js';
 
 /**
  * Hugging Face LLM Provider implementation
@@ -59,16 +60,20 @@ class HuggingFaceProvider extends BaseLLMProvider {
                 const text = this.extractTextFromResponse(response, currentModel);
                 console.log(`✅ ${currentModel} - Response received: ${text.length} characters`);
 
-                // Extract and parse JSON from response
-                const cleanText = this.extractJSONFromResponse(text);
-                const parsedQuestions = JSON.parse(cleanText);
-
-                if (!parsedQuestions.questions || !Array.isArray(parsedQuestions.questions)) {
-                    throw new Error('Invalid response format from Hugging Face API');
+                // Extract and parse JSON from response using unified extractor
+                try {
+                    const cleanText = JSONExtractor.extractJSONFromResponse(text, 'HuggingFace');
+                    const parsedQuestions = JSONExtractor.validateQuestionsStructure(cleanText);
+                    return parsedQuestions.questions;
+                } catch (jsonError) {
+                    // Fallback to text construction for models that don't return JSON
+                    console.warn(`JSON extraction failed, trying text construction: ${jsonError.message}`);
+                    const constructed = this.constructJSONFromText(text);
+                    const parsedQuestions = JSONExtractor.validateQuestionsStructure(constructed);
+                    return parsedQuestions.questions;
                 }
 
-                console.log(`✅ ${currentModel} - Successfully parsed ${parsedQuestions.questions.length} questions`);
-                return parsedQuestions.questions;
+                // This line is handled above in the new structure
                 
             } catch (error) {
                 lastError = error;
@@ -203,7 +208,11 @@ class HuggingFaceProvider extends BaseLLMProvider {
         const url = `${this.config.baseUrl}/models/${model}`;
         
         try {
-            const fetch = require('node-fetch');
+            // Use global fetch (Node.js 18+) or import if needed
+            if (typeof fetch === "undefined") {
+                const { default: fetch } = await import("node-fetch");
+                global.fetch = fetch;
+            }
             
             const response = await fetch(url, {
                 method: 'POST',
@@ -237,36 +246,6 @@ class HuggingFaceProvider extends BaseLLMProvider {
         }
     }
 
-    extractJSONFromResponse(text) {
-        // Remove markdown code blocks
-        let cleaned = text.replace(/```json\s*|\s*```/g, '');
-
-        // Remove any text before the first { and after the last }
-        const firstBrace = cleaned.indexOf('{');
-        const lastBrace = cleaned.lastIndexOf('}');
-
-        if (firstBrace === -1 || lastBrace === -1) {
-            // If no JSON found, try to construct it from the text
-            console.warn('No JSON object found, attempting to construct from text');
-            return this.constructJSONFromText(text);
-        }
-
-        cleaned = cleaned.substring(firstBrace, lastBrace + 1);
-
-        // Hugging Face specific cleaning
-        cleaned = cleaned
-            .replace(/^\s*["']?json["']?\s*/, '') // Remove leading "json"
-            .trim();
-
-        // Validate JSON
-        try {
-            JSON.parse(cleaned);
-            return cleaned;
-        } catch (error) {
-            console.warn('JSON parse failed, attempting to construct from text...');
-            return this.constructJSONFromText(text);
-        }
-    }
 
     constructJSONFromText(text) {
         // Fallback: construct basic JSON structure from unstructured text
@@ -314,4 +293,4 @@ class HuggingFaceProvider extends BaseLLMProvider {
     }
 }
 
-module.exports = HuggingFaceProvider;
+export default HuggingFaceProvider;

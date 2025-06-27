@@ -19,7 +19,7 @@ export default {
     '^.+\\.js$': 'babel-jest'
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(svelte)/)'
+    'node_modules/(?!(svelte|pdfjs-dist)/)'
   ],
   testTimeout: 10000
 };

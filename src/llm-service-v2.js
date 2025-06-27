@@ -1,6 +1,8 @@
-const ProviderFactory = require('./llm-providers/provider-factory');
-const ConfigManager = require('./config/config-manager');
-const ApiKeyCache = require('./services/api-key-cache');
+import ProviderFactory from './llm-providers/provider-factory.js';
+import ConfigManager from './config/config-manager.js';
+import ApiKeyCache from './services/api-key-cache.js';
+
+import log from 'electron-log/main.js';
 
 /**
  * Enhanced LLM Service with SOLID architecture
@@ -40,13 +42,13 @@ class LLMService {
             // Cache the API key if validation successful
             if (await this.currentProvider.testApiKey()) {
                 await this.apiKeyCache.setApiKey(providerName, apiKey, () => this.currentProvider.testApiKey());
-                console.log(`✅ ${providerName} provider configured and validated successfully`);
+                log.info(`✅ ${providerName} provider configured and validated successfully`);
             } else {
-                console.warn(`⚠️  ${providerName} provider configured but API key validation failed`);
+                log.debug(`⚠️  ${providerName} provider configured but API key validation failed`);
             }
             
         } catch (error) {
-            console.error(`❌ Failed to configure ${providerName} provider:`, error.message);
+            log.error(`❌ Failed to configure ${providerName} provider:`, error.message);
             throw new Error(`Failed to configure ${providerName} provider: ${error.message}`);
         }
     }
@@ -69,13 +71,13 @@ class LLMService {
                     isValid: await provider.testApiKey()
                 });
                 
-                console.log(`📋 Fallback provider ${config.provider} configured`);
+                log.info(`📋 Fallback provider ${config.provider} configured`);
             } catch (error) {
-                console.warn(`⚠️  Failed to configure fallback provider ${config.provider}:`, error.message);
+                log.warn(`⚠️  Failed to configure fallback provider ${config.provider}:`, error.message);
             }
         }
         
-        console.log(`🔄 Configured ${this.fallbackProviders.length} fallback providers`);
+        log.info(`🔄 Configured ${this.fallbackProviders.length} fallback providers`);
     }
 
     /**
@@ -103,11 +105,11 @@ class LLMService {
         // Try primary provider first
         if (this.currentProvider) {
             try {
-                console.log(`🎯 Attempting generation with primary provider: ${this.providerName}`);
+                log.info(`🎯 Attempting generation with primary provider: ${this.providerName}`);
                 const questions = await this.currentProvider.generateQuestions(prompt, options);
                 return this.validateAndProcessQuestions(questions);
             } catch (error) {
-                console.warn(`❌ Primary provider ${this.providerName} failed:`, error.message);
+                log.warn(`❌ Primary provider ${this.providerName} failed:`, error.message);
                 
                 if (!this.config.autoFallback) {
                     throw error;
@@ -117,23 +119,23 @@ class LLMService {
 
         // Try fallback providers if auto-fallback is enabled
         if (this.config.autoFallback && this.fallbackProviders.length > 0) {
-            console.log('🔄 Attempting fallback providers...');
+            log.info('🔄 Attempting fallback providers...');
             
             for (const fallback of this.fallbackProviders) {
                 if (!fallback.isValid) {
-                    console.log(`⏭️  Skipping invalid fallback provider: ${fallback.name}`);
+                    log.info(`⏭️  Skipping invalid fallback provider: ${fallback.name}`);
                     continue;
                 }
                 
                 try {
-                    console.log(`🎯 Attempting generation with fallback provider: ${fallback.name}`);
+                    log.info(`🎯 Attempting generation with fallback provider: ${fallback.name}`);
                     const questions = await fallback.provider.generateQuestions(prompt, options);
                     const processedQuestions = this.validateAndProcessQuestions(questions);
                     
-                    console.log(`✅ Successfully generated ${processedQuestions.length} questions with ${fallback.name}`);
+                    log.info(`✅ Successfully generated ${processedQuestions.length} questions with ${fallback.name}`);
                     return processedQuestions;
                 } catch (error) {
-                    console.warn(`❌ Fallback provider ${fallback.name} failed:`, error.message);
+                    log.warn(`❌ Fallback provider ${fallback.name} failed:`, error.message);
                 }
             }
         }
@@ -153,7 +155,7 @@ class LLMService {
             await provider.configure(apiKey);
             return await provider.testApiKey();
         } catch (error) {
-            console.error(`API key test failed for ${providerName}:`, error.message);
+            log.error(`API key test failed for ${providerName}:`, error.message);
             return false;
         }
     }
@@ -273,12 +275,12 @@ Important:
      * @returns {Array} Processed questions
      */
     validateAndProcessQuestions(questions) {
-        console.log(`Starting validation of ${questions.length} questions`);
+        log.info(`Starting validation of ${questions.length} questions`);
         const processedQuestions = [];
 
         questions.forEach((question, index) => {
             try {
-                console.log(`Processing question ${index + 1}:`, {
+                log.info(`Processing question ${index + 1}:`, {
                     type: question.type,
                     text: question.text?.substring(0, 50) + '...',
                     hasChoices: question.choices ? question.choices.length : 'N/A',
@@ -294,14 +296,14 @@ Important:
 
                 // Validate question type
                 if (!['multiple_choice', 'true_false', 'short_answer', 'essay'].includes(question.type)) {
-                    console.warn(`Skipping question ${index + 1}: Invalid type ${question.type}`);
+                    log.warn(`Skipping question ${index + 1}: Invalid type ${question.type}`);
                     return;
                 }
 
                 // Type-specific validation and processing
                 if (question.type === 'multiple_choice') {
                     if (!question.choices || !Array.isArray(question.choices) || question.choices.length !== 4) {
-                        console.warn(`Skipping question ${index + 1}: Multiple choice must have exactly 4 choices. Got:`, question.choices);
+                        log.warn(`Skipping question ${index + 1}: Multiple choice must have exactly 4 choices. Got:`, question.choices);
                         return;
                     }
                     processedQuestion.choices = question.choices.map((choice, i) => ({
@@ -309,10 +311,10 @@ Important:
                         text: choice.text
                     }));
                     processedQuestion.correctAnswer = question.correctAnswer;
-                    console.log(`Multiple choice question processed. Correct answer: ${question.correctAnswer}`);
+                    log.info(`Multiple choice question processed. Correct answer: ${question.correctAnswer}`);
                 } else if (question.type === 'true_false') {
                     if (!['true', 'false'].includes(question.correctAnswer)) {
-                        console.warn(`Skipping question ${index + 1}: True/false must have 'true' or 'false' as correct answer. Got: ${question.correctAnswer}`);
+                        log.warn(`Skipping question ${index + 1}: True/false must have 'true' or 'false' as correct answer. Got: ${question.correctAnswer}`);
                         return;
                     }
                     processedQuestion.correctAnswer = question.correctAnswer;
@@ -328,13 +330,13 @@ Important:
                 }
 
                 processedQuestions.push(processedQuestion);
-                console.log(`Successfully processed question ${index + 1}`);
+                log.info(`Successfully processed question ${index + 1}`);
             } catch (error) {
-                console.warn(`Error processing question ${index + 1}:`, error);
+                log.warn(`Error processing question ${index + 1}:`, error);
             }
         });
 
-        console.log(`Validation complete. ${processedQuestions.length} questions processed successfully.`);
+        log.info(`Validation complete. ${processedQuestions.length} questions processed successfully.`);
 
         if (processedQuestions.length === 0) {
             throw new Error('No valid questions were generated');
@@ -362,7 +364,7 @@ Important:
             }
 
         } catch (error) {
-            console.warn('PDF extraction failed:', error.message);
+            log.warn('PDF extraction failed:', error.message);
             throw new Error(error.message);
         }
     }
@@ -446,4 +448,4 @@ Important:
     }
 }
 
-module.exports = LLMService;
+export default LLMService;

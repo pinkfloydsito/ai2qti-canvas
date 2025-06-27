@@ -124,4 +124,4 @@ class BaseLLMProvider {
     }
 }
 
-module.exports = BaseLLMProvider;
+export default BaseLLMProvider;

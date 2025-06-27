@@ -517,4 +517,4 @@ class QTIExporter {
     }
 }
 
-module.exports = QTIExporter;
+export default QTIExporter;

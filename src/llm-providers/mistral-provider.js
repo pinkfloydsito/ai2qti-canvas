@@ -1,4 +1,5 @@
-const BaseLLMProvider = require('./base-llm-provider');
+import BaseLLMProvider from './base-llm-provider.js';
+import JSONExtractor from './json-extractor.js';
 
 /**
  * Mistral AI LLM Provider implementation
@@ -73,13 +74,9 @@ class MistralProvider extends BaseLLMProvider {
                 const text = response.choices[0].message.content;
                 console.log(`✅ ${currentModel} - Response received: ${text.length} characters`);
 
-                // Extract and parse JSON from response
-                const cleanText = this.extractJSONFromResponse(text);
-                const parsedQuestions = JSON.parse(cleanText);
-
-                if (!parsedQuestions.questions || !Array.isArray(parsedQuestions.questions)) {
-                    throw new Error('Invalid response format from Mistral API');
-                }
+                // Extract and parse JSON from response using unified extractor
+                const cleanText = JSONExtractor.extractJSONFromResponse(text, 'Mistral');
+                const parsedQuestions = JSONExtractor.validateQuestionsStructure(cleanText);
 
                 console.log(`✅ ${currentModel} - Successfully parsed ${parsedQuestions.questions.length} questions`);
                 return parsedQuestions.questions;
@@ -147,7 +144,11 @@ class MistralProvider extends BaseLLMProvider {
         const url = `${this.config.baseUrl}${endpoint}`;
         
         try {
-            const fetch = require('node-fetch'); // Ensure node-fetch is available
+            // Use global fetch (Node.js 18+) or import if needed
+            if (typeof fetch === "undefined") {
+                const { default: fetch } = await import("node-fetch");
+                global.fetch = fetch;
+            } // Ensure node-fetch is available
             
             const response = await fetch(url, {
                 method: 'POST',
@@ -169,48 +170,6 @@ class MistralProvider extends BaseLLMProvider {
         }
     }
 
-    extractJSONFromResponse(text) {
-        // Remove markdown code blocks
-        let cleaned = text.replace(/```json\s*|\s*```/g, '');
-
-        // Remove any text before the first { and after the last }
-        const firstBrace = cleaned.indexOf('{');
-        const lastBrace = cleaned.lastIndexOf('}');
-
-        if (firstBrace === -1 || lastBrace === -1) {
-            throw new Error('No JSON object found in response');
-        }
-
-        cleaned = cleaned.substring(firstBrace, lastBrace + 1);
-
-        // Fix common JSON issues
-        cleaned = cleaned
-            .replace(/([^\\])\\([^\\"])/g, '$1\\\\$2') // Fix unescaped backslashes
-            .replace(/^\s*["']?json["']?\s*/, '') // Remove leading "json"
-            .trim();
-
-        // Validate JSON
-        try {
-            JSON.parse(cleaned);
-            return cleaned;
-        } catch (error) {
-            console.warn('JSON parse failed, attempting basic repair...');
-            
-            // Basic JSON repair
-            const repaired = cleaned
-                .replace(/,\s*}/g, '}') // Remove trailing commas
-                .replace(/,\s*]/g, ']')
-                .replace(/([^\\])"/g, '$1\\"') // Escape unescaped quotes
-                .replace(/^"/, '\\"'); // Escape leading quote if present
-            
-            try {
-                JSON.parse(repaired);
-                return repaired;
-            } catch (repairError) {
-                throw new Error(`Invalid JSON format: ${error.message}`);
-            }
-        }
-    }
 }
 
-module.exports = MistralProvider;
+export default MistralProvider;
