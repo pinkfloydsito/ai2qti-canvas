@@ -1,7 +1,7 @@
 {
   "name": "qti-generator",
   "version": "1.0.0",
-  "description": "Electron app to generate QTI files for Canvas LMS",
+  "description": "Generador de QTI para Canvas LMS",
   "type": "module",
   "main": "main.js",
   "scripts": {
@@ -11,6 +11,8 @@
     "dev:electron": "NODE_ENV=development electron . --dev",
     "build": "vite build",
     "build:electron": "npm run build && electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
     "pack": "electron-builder --dir",
     "dist": "electron-builder --publish=never",
     "test": "jest",
@@ -58,8 +60,25 @@
     "directories": {
       "output": "build"
     },
+    "win": {
+      "target": "nsis",
+      "icon": "logo.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "logo.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "runAfterFinish": false,
+      "deleteAppDataOnUninstall": false,
+      "include": "build/installer.nsh"
+    },
     "files": [
       "main.js",
+      "logo.ico",
       "preload.js",
       "dist/**/*",
       "src/**/*",

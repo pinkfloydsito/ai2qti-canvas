@@ -20,11 +20,15 @@ function createWindow() {
     width: 1200,
     height: 800,
     webPreferences: {
-      nodeIntegration: false,
+      //nodeIntegration: false,
+      nodeIntegration: true,
+      //contextIsolation: true,
       contextIsolation: true,
+      enableRemoteModule: true,
+      webSecurity: false,
       preload: path.join(__dirname, 'preload.js')
     },
-    icon: path.join(__dirname, 'assets/icon.png')
+    icon: path.join(__dirname, 'logo.ico')
   });
 
   // Check if we're in development mode
