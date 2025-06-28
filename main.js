@@ -31,6 +31,12 @@ function createWindow() {
     icon: path.join(__dirname, 'logo.ico')
   });
 
+  // Handle quit parameter for installer
+  if (process.argv.includes('--quit')) {
+    app.quit();
+    return;
+  }
+
   // Check if we're in development mode
   const isDev = process.env.NODE_ENV === 'development' || process.argv.includes('--dev');
 
