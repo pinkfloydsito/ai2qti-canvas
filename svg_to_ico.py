@@ -3,21 +3,42 @@ from PIL import Image
 import os
 
 
-def convert_svg_to_ico(svg_path, ico_path, size=(256, 256)):
-    png_path = "temp.png"
-    svg2png(
-        url=svg_path, write_to=png_path, output_width=size[0], output_height=size[1]
-    )
+def convert_svg_to_ico(svg_path, ico_path):
+    """Convert SVG to Windows ICO format"""
+    temp_png = "temp_icon.png"
 
-    # Step 2: Convert PNG to ICO
-    img = Image.open(png_path)
-    img.save(ico_path, format="ICO", sizes=[size])
+    try:
+        # Render SVG to a high-res PNG
+        svg2png(url=svg_path, write_to=temp_png, output_width=1024, output_height=1024)
 
-    # Clean up temporary PNG file
-    os.remove(png_path)
-    print(f"ICO file saved as {ico_path}")
+        # Open the image and convert to ICO with multiple sizes
+        img = Image.open(temp_png)
+        img.save(
+            ico_path,
+            format="ICO",
+            sizes=[
+                (16, 16),
+                (24, 24),
+                (32, 32),
+                (48, 48),
+                (64, 64),
+                (128, 128),
+                (256, 256),
+                (512, 512),
+            ],
+        )
+
+        print(f"Successfully created ICO file at {ico_path}")
+        return True
+
+    except Exception as e:
+        print(f"Error creating ICO: {str(e)}")
+        return False
+
+    finally:
+        if os.path.exists(temp_png):
+            os.remove(temp_png)
 
 
-svg_file = "logo.svg"
-ico_file = "log.ico"
-convert_svg_to_ico(svg_file, ico_file)
+# Usage
+convert_svg_to_ico("logo.svg", "logo.ico")

@@ -4,6 +4,7 @@ import { fileURLToPath, URL } from 'node:url';
 
 export default defineConfig({
   plugins: [svelte()],
+  base: './',
   build: {
     outDir: 'dist',
     emptyOutDir: true,
