@@ -1,4 +1,4 @@
-const QTIExporter = require('../src/qti-exporter');
+import QTIExporter from '../src/qti-exporter.js';
 
 describe('QTI Exporter', () => {
     let exporter;

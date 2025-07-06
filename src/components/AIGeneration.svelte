@@ -28,17 +28,17 @@
     { value: 'essay', label: $t('aiGeneration.typeLabels.essay') }
   ];
   
-  function handleFileUpload(event) {
-    const file = event.target.files[0];
-    if (file && file.type === 'application/pdf') {
-      aiGenerationActions.setPdfFile(file, file.name);
-      dispatch('pdfUploaded', { file });
-    }
-  }
-  
-  function triggerFileUpload() {
-    fileInput.click();
-  }
+  // function handleFileUpload(event) {
+  //   const file = event.target.files[0];
+  //   if (file && file.type === 'application/pdf') {
+  //     aiGenerationActions.setPdfFile(file, file.name);
+  //     dispatch('pdfUploaded', { file });
+  //   }
+  // }
+  // 
+  // function triggerFileUpload() {
+  //   fileInput.click();
+  // }
   
   function handleContextTextChange(event) {
     aiGenerationActions.updateParams({ contextText: event.target.value });
@@ -76,7 +76,7 @@
     console.log('🤖 AIGeneration: Generate button clicked');
     console.log('🔧 AIGeneration: LLM configured?', llmConfig.isConfigured);
     console.log('📝 AIGeneration: Context text:', aiParams.contextText?.substring(0, 100) + '...');
-    console.log('📄 AIGeneration: PDF file:', aiParams.pdfFile?.name);
+    // console.log('📄 AIGeneration: PDF file:', aiParams.pdfFile?.name);
     console.log('🎯 AIGeneration: Question types:', aiParams.questionTypes);
     
     if (!llmConfig.isConfigured) {
@@ -84,7 +84,7 @@
       return;
     }
     
-    if (!aiParams.contextText && !aiParams.pdfFile) {
+    if (!aiParams.contextText) {
       alert($t('messages.errors.noContext'));
       return;
     }
@@ -97,7 +97,7 @@
     console.log('🚀 AIGeneration: Dispatching generateQuestions event');
     dispatch('generateQuestions', {
       contextText: aiParams.contextText,
-      pdfFile: aiParams.pdfFile,
+      // pdfFile: aiParams.pdfFile,
       questionCount: aiParams.questionCount,
       difficultyLevel: aiParams.difficultyLevel,
       questionTypes: aiParams.questionTypes,
@@ -105,17 +105,18 @@
     });
   }
   
-  function clearPdf() {
-    aiGenerationActions.clearPdf();
-    if (fileInput) {
-      fileInput.value = '';
-    }
-  }
+  // function clearPdf() {
+  //   aiGenerationActions.clearPdf();
+  //   if (fileInput) {
+  //     fileInput.value = '';
+  //   }
+  // }
 </script>
 
 <section class="ai-generation-section">
   <h2>{$t('aiGeneration.title')}</h2>
   <div class="ai-controls">
+    <!-- PDF Upload Section - DISABLED
     <div class="form-group">
       <label for="pdfUpload">{$t('aiGeneration.uploadPdf')}</label>
       <div class="upload-area">
@@ -145,6 +146,7 @@
         {/if}
       </div>
     </div>
+    -->
     
     <div class="form-group">
       <label for="contextText">{$t('aiGeneration.contextText')}</label>

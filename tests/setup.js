@@ -30,3 +30,27 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 global.alert = jest.fn();
+
+// Mock electron-log for testing
+jest.mock('electron-log/main.js', () => ({
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn(),
+  transports: {
+    file: { level: 'info' },
+    console: { level: 'debug' }
+  }
+}));
+
+// Mock electron-log for renderer (alternative import)
+jest.mock('electron-log', () => ({
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn(),
+  transports: {
+    file: { level: 'info' },
+    console: { level: 'debug' }
+  }
+}));

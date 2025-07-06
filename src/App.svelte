@@ -51,14 +51,14 @@
     }
   }
   
-  async function handlePdfUploaded(event) {
-    try {
-      const { file } = event.detail;
-      await qtiGenerator.processPDF(file);
-    } catch (error) {
-      alert(`Error processing PDF: ${error.message}`);
-    }
-  }
+  // async function handlePdfUploaded(event) {
+  //   try {
+  //     const { file } = event.detail;
+  //     await qtiGenerator.processPDF(file);
+  //   } catch (error) {
+  //     alert(`Error processing PDF: ${error.message}`);
+  //   }
+  // }
   
   async function handleGenerateQuestions(event) {
     try {
@@ -91,7 +91,6 @@
   <div class="content">
     <LLMConfiguration />
     <AIGeneration 
-      on:pdfUploaded={handlePdfUploaded}
       on:generateQuestions={handleGenerateQuestions}
     />
     <AssessmentDetails />

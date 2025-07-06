@@ -11,15 +11,15 @@ export const llmStore = writable({
 
 // AI generation parameters store
 export const aiGenerationStore = writable({
-  contextText: 'La inteligencia artificial es un campo de la informática que se enfoca en crear sistemas capaces de realizar tareas que típicamente requieren inteligencia humana. Estos sistemas pueden aprender, razonar, planificar y percibir. Los algoritmos de machine learning permiten a las máquinas mejorar su rendimiento en tareas específicas a través de la experiencia.',
-  pdfFile: null,
-  fileName: '',
+  contextText: '',
+  // pdfFile: null,
+  // fileName: '',
   questionCount: 5,
-  difficultyLevel: 'medium',
+  difficultyLevel: 'hard',
   questionTypes: ['multiple_choice'],
   includeMath: true,
-  isExtracting: false,
-  extractionProgress: 0
+  // isExtracting: false,
+  // extractionProgress: 0
 });
 
 // Helper functions for LLM operations
@@ -31,14 +31,14 @@ export const llmActions = {
       isConfigured: !!(config.apiKey && config.provider)
     }));
   },
-  
+
   setGenerating: (isGenerating) => {
     llmStore.update(store => ({
       ...store,
       isGenerating
     }));
   },
-  
+
   setError: (error) => {
     llmStore.update(store => ({
       ...store,
@@ -46,7 +46,7 @@ export const llmActions = {
       isGenerating: false
     }));
   },
-  
+
   clearError: () => {
     llmStore.update(store => ({
       ...store,
@@ -62,29 +62,29 @@ export const aiGenerationActions = {
       ...params
     }));
   },
-  
-  setPdfFile: (file, fileName) => {
-    aiGenerationStore.update(store => ({
-      ...store,
-      pdfFile: file,
-      fileName: fileName
-    }));
-  },
-  
-  setExtracting: (isExtracting, progress = 0) => {
-    aiGenerationStore.update(store => ({
-      ...store,
-      isExtracting,
-      extractionProgress: progress
-    }));
-  },
-  
-  clearPdf: () => {
-    aiGenerationStore.update(store => ({
-      ...store,
-      pdfFile: null,
-      fileName: '',
-      contextText: ''
-    }));
-  }
+
+  // setPdfFile: (file, fileName) => {
+  //   aiGenerationStore.update(store => ({
+  //     ...store,
+  //     pdfFile: file,
+  //     fileName: fileName
+  //   }));
+  // },
+
+  // setExtracting: (isExtracting, progress = 0) => {
+  //   aiGenerationStore.update(store => ({
+  //     ...store,
+  //     isExtracting,
+  //     extractionProgress: progress
+  //   }));
+  // },
+
+  // clearPdf: () => {
+  //   aiGenerationStore.update(store => ({
+  //     ...store,
+  //     pdfFile: null,
+  //     fileName: '',
+  //     contextText: ''
+  //   }));
+  // }
 };

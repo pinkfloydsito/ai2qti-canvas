@@ -8,9 +8,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   loadAssessment: () => ipcRenderer.invoke('load-assessment'),
   exportQTI: (qtiXML) => ipcRenderer.invoke('export-qti', qtiXML),
 
-  // File operations
-  selectPDFFile: () => ipcRenderer.invoke('select-pdf-file'),
-  extractText: (arrayBuffer) => ipcRenderer.invoke('extract-pdf-text', arrayBuffer),
+  // File operations - PDF functionality disabled
+  // selectPDFFile: () => ipcRenderer.invoke('select-pdf-file'),
+  // extractText: (arrayBuffer) => ipcRenderer.invoke('extract-pdf-text', arrayBuffer),
 
   // LLM operations
   configureLLM: (provider, apiKey) => ipcRenderer.invoke('configure-llm', provider, apiKey),
