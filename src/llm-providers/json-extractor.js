@@ -43,6 +43,14 @@ class JSONExtractor {
     try {
       const parsed = JSON.parse(cleaned);
       log.info(`[${providerName}] JSON parsed successfully on first attempt`);
+      
+      // Even if JSON is valid, we still need to apply LaTeX fixes for double backslashes
+      const latexFixed = this.fixLatexEscapes(cleaned);
+      if (latexFixed !== cleaned) {
+        log.info(`[${providerName}] Applied LaTeX fixes to valid JSON`);
+        return latexFixed;
+      }
+      
       return cleaned;
     } catch (error) {
       log.warn(`[${providerName}] Initial JSON parse failed: ${error.message}`);
@@ -115,36 +123,24 @@ class JSONExtractor {
   static fixLatexEscapes(text) {
     let fixed = text;
 
-    // Fix LaTeX expressions specifically - reduce double backslashes to single
-    const mathPatterns = [
-      // Single $ delimiters - fix backslashes inside
-      {
-        pattern: /"\$([^"]*?)\$"/g,
-        fix: (match, content) => {
-          const cleanContent = content.replace(/\\+/g, '\\'); // Multiple backslashes → single
-          return `"$${cleanContent}$"`;
+    // Fix LaTeX expressions specifically - handle various backslash patterns
+    // We need to handle different cases:
+    // - \\\\\\\\ in JSON should become \\\\ (which becomes \\ when parsed - double backslash for LaTeX)
+    // - \\\\ in JSON should become \\ (which becomes \ when parsed - single backslash for LaTeX)
+    fixed = fixed.replace(/"([^"]*)"/g, (match, content) => {
+      // Only process if it contains LaTeX-like patterns with multiple backslashes
+      if (content.includes('\\\\') && /\\\\[a-zA-Z]/.test(content)) {
+        // For the case where we have 4 backslashes (\\\\\\\\) -> reduce to 2 (\\\\)
+        // This handles over-escaped LaTeX from some AI responses
+        if (content.includes('\\\\\\\\')) {
+          const cleanContent = content.replace(/\\\\\\\\/g, '\\\\');
+          return `"${cleanContent}"`;
         }
-      },
-      // Double $$ delimiters - fix backslashes inside  
-      {
-        pattern: /"\$\$([^"]*?)\$\$"/g,
-        fix: (match, content) => {
-          const cleanContent = content.replace(/\\+/g, '\\'); // Multiple backslashes → single
-          return `"$$${cleanContent}$$"`;
-        }
-      },
-      // Unquoted LaTeX expressions
-      {
-        pattern: /\$([^$"]*?)\$/g,
-        fix: (match, content) => {
-          const cleanContent = content.replace(/\\+/g, '\\');
-          return `"$${cleanContent}$"`;
-        }
+        // For normal case with 2 backslashes, \\\\ should remain \\\\ (which becomes \\ when parsed)
+        // This is already valid JSON, so no change needed
+        return match;
       }
-    ];
-
-    mathPatterns.forEach(({ pattern, fix }) => {
-      fixed = fixed.replace(pattern, fix);
+      return match;
     });
 
     return fixed;

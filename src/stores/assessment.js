@@ -19,8 +19,8 @@ export const assessmentActions = {
   
   addQuestion: (question) => {
     assessmentStore.update(assessment => {
-      // Generate unique ID by combining timestamp with random component
-      const id = question.id || `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      // Generate unique ID by combining timestamp, random component, and question index
+      const id = question.id || `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${assessment.questions.length}`;
       return {
         ...assessment,
         questions: [...assessment.questions, { ...question, id }]

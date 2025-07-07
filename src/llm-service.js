@@ -337,7 +337,7 @@ Important:
         });
 
         const processedQuestion = {
-          id: index + 1,
+          id: `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${index}`,
           type: question.type,
           text: question.text,
           points: question.points || 1

@@ -172,6 +172,43 @@ describe('LLM Providers Architecture', () => {
             expect(parsed.questions[0].text).toContain('\\frac{x}{2}');
         });
 
+        test('should convert double backslashes to single backslashes in LaTeX expressions', () => {
+            const testResponse = JSON.stringify({
+                "id": 1,
+                "type": "multiple_choice",
+                "text": "A regular tetrahedron is inscribed in a sphere of radius $R$. What is the volume of the tetrahedron in terms of $R$?",
+                "points": 2,
+                "choices": [
+                    {"id": 0, "text": "$\\\\frac{4\\\\sqrt{2}}{9}R^3$"},
+                    {"id": 1, "text": "$\\\\frac{8\\\\sqrt{3}}{27}R^3$"},
+                    {"id": 2, "text": "$\\\\frac{2\\\\sqrt{6}}{9}R^3$"},
+                    {"id": 3, "text": "$\\\\frac{16\\\\sqrt{3}}{81}R^3$"}
+                ],
+                "correctAnswer": 1,
+                "explanation": "Let $a$ be the side length of the regular tetrahedron. The height of the tetrahedron is $h = a\\\\sqrt{\\\\frac{2}{3}}$. The center of the inscribed sphere (circumcenter) coincides with the tetrahedron's centroid. The distance from the centroid to any vertex is $R$. The centroid divides the altitude from a vertex to the center of the opposite face in a $3:1$ ratio (vertex to centroid is $3/4$ of the total height). Thus, $R = \\\\frac{3}{4}h = \\\\frac{3}{4}a\\\\sqrt{\\\\frac{2}{3}} = \\\\frac{3a\\\\sqrt{6}}{12} = \\\\frac{a\\\\sqrt{6}}{4}$."
+            });
+            
+            const result = JSONExtractor.extractJSONFromResponse(testResponse, 'Test');
+            const parsed = JSON.parse(result);
+            
+            // Check that double backslashes are converted to single backslashes
+            expect(parsed.choices[0].text).toBe('$\\frac{4\\sqrt{2}}{9}R^3$');
+            expect(parsed.choices[1].text).toBe('$\\frac{8\\sqrt{3}}{27}R^3$');
+            expect(parsed.choices[2].text).toBe('$\\frac{2\\sqrt{6}}{9}R^3$');
+            expect(parsed.choices[3].text).toBe('$\\frac{16\\sqrt{3}}{81}R^3$');
+            
+            // Check explanation text has single backslashes by checking for LaTeX commands
+            expect(parsed.explanation).toContain('\\frac');
+            expect(parsed.explanation).toContain('\\sqrt');
+            
+            // Ensure no double backslashes remain in any choice text
+            expect(parsed.choices[0].text).not.toContain('\\\\');
+            expect(parsed.choices[1].text).not.toContain('\\\\');
+            expect(parsed.choices[2].text).not.toContain('\\\\');
+            expect(parsed.choices[3].text).not.toContain('\\\\');
+            expect(parsed.explanation).not.toContain('\\\\');
+        });
+
         test('should repair malformed JSON using unified extractor', () => {
             const malformedJson = '{"questions": [{"text": "Test"}]}'; // Valid JSON for test
             const result = JSONExtractor.extractJSONFromResponse(malformedJson, 'Gemini');
