@@ -4,14 +4,14 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import log from 'electron-log/main.js';
 
-// import PDFExtractor from './src/pdf-extractor.js';
+import PDFExtractor from './src/pdf-extractor.js';
 import LLMService from './src/llm-service-v2.js';
 
 // Configure logging
 log.transports.file.level = 'info';
 log.transports.console.level = 'debug';
 
-// const extractor = new PDFExtractor();
+const extractor = new PDFExtractor();
 const llmService = new LLMService();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -331,28 +331,28 @@ ipcMain.handle('load-assessment', safeHandler(async (event) => {
   return { success: false, canceled: true };
 }));
 
-// ipcMain.handle('select-pdf-file', safeHandler(async (event) => {
-//   if (!mainWindow) throw new Error('No main window available');
-//
-//   const result = await dialog.showOpenDialog(mainWindow, {
-//     properties: ['openFile'],
-//     filters: [
-//       { name: 'PDF Files', extensions: ['pdf'] }
-//     ]
-//   });
-//
-//   if (!result.canceled && result.filePaths.length > 0) {
-//     return { success: true, filePath: result.filePaths[0] };
-//   }
-//
-//   return { success: false, canceled: true };
-// }));
+ipcMain.handle('select-pdf-file', safeHandler(async (event) => {
+  if (!mainWindow) throw new Error('No main window available');
 
-// ipcMain.handle('extract-pdf-text', safeHandler(async (_, arrayBuffer) => {
-//   const buffer = Buffer.from(arrayBuffer);
-//   log.info('Extracting text from PDF buffer of size:', buffer.length);
-//   return await extractor.extractText(buffer);
-// }));
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openFile'],
+    filters: [
+      { name: 'PDF Files', extensions: ['pdf'] }
+    ]
+  });
+
+  if (!result.canceled && result.filePaths.length > 0) {
+    return { success: true, filePath: result.filePaths[0] };
+  }
+
+  return { success: false, canceled: true };
+}));
+
+ipcMain.handle('extract-pdf-text', safeHandler(async (_, arrayBuffer) => {
+  const buffer = Buffer.from(arrayBuffer);
+  log.info('Extracting text from PDF buffer of size:', buffer.length);
+  return await extractor.extractText(buffer);
+}));
 
 // LLM Service handlers
 ipcMain.handle('configure-llm', safeHandler(async (_, provider, apiKey) => {

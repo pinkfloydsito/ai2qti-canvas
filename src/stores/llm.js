@@ -12,14 +12,14 @@ export const llmStore = writable({
 // AI generation parameters store
 export const aiGenerationStore = writable({
   contextText: '',
-  // pdfFile: null,
-  // fileName: '',
+  pdfFile: null,
+  fileName: '',
   questionCount: 5,
   difficultyLevel: 'hard',
   questionTypes: ['multiple_choice'],
   includeMath: true,
-  // isExtracting: false,
-  // extractionProgress: 0
+  isExtracting: false,
+  extractionProgress: 0
 });
 
 // Helper functions for LLM operations
@@ -63,28 +63,28 @@ export const aiGenerationActions = {
     }));
   },
 
-  // setPdfFile: (file, fileName) => {
-  //   aiGenerationStore.update(store => ({
-  //     ...store,
-  //     pdfFile: file,
-  //     fileName: fileName
-  //   }));
-  // },
+  setPdfFile: (file, fileName) => {
+    aiGenerationStore.update(store => ({
+      ...store,
+      pdfFile: file,
+      fileName: fileName
+    }));
+  },
 
-  // setExtracting: (isExtracting, progress = 0) => {
-  //   aiGenerationStore.update(store => ({
-  //     ...store,
-  //     isExtracting,
-  //     extractionProgress: progress
-  //   }));
-  // },
+  setExtracting: (isExtracting, progress = 0) => {
+    aiGenerationStore.update(store => ({
+      ...store,
+      isExtracting,
+      extractionProgress: progress
+    }));
+  },
 
-  // clearPdf: () => {
-  //   aiGenerationStore.update(store => ({
-  //     ...store,
-  //     pdfFile: null,
-  //     fileName: '',
-  //     contextText: ''
-  //   }));
-  // }
+  clearPdf: () => {
+    aiGenerationStore.update(store => ({
+      ...store,
+      pdfFile: null,
+      fileName: '',
+      contextText: ''
+    }));
+  }
 };

@@ -1,6 +1,7 @@
 import ProviderFactory from './llm-providers/provider-factory.js';
 import ConfigManager from './config/config-manager.js';
 import ApiKeyCache from './services/api-key-cache.js';
+import { thinkingLogActions } from './stores/thinking-log.js';
 
 import log from 'electron-log/main.js';
 
@@ -129,18 +130,27 @@ class LLMService {
                 
                 try {
                     log.info(`🎯 Attempting generation with fallback provider: ${fallback.name}`);
+                    thinkingLogActions.processing(`Sending request to fallback provider: ${fallback.name}`);
+                    
                     const questions = await fallback.provider.generateQuestions(prompt, options);
+                    thinkingLogActions.success(`Received response from ${fallback.name}`);
+                    thinkingLogActions.processing('Validating and processing questions...');
+                    
                     const processedQuestions = this.validateAndProcessQuestions(questions);
                     
                     log.info(`✅ Successfully generated ${processedQuestions.length} questions with ${fallback.name}`);
+                    thinkingLogActions.success(`Generated ${processedQuestions.length} questions with ${fallback.name}`);
                     return processedQuestions;
                 } catch (error) {
                     log.warn(`❌ Fallback provider ${fallback.name} failed:`, error.message);
+                    thinkingLogActions.error(`Fallback provider ${fallback.name} failed: ${error.message}`);
                 }
             }
         }
 
-        throw new Error('All configured providers failed to generate questions');
+        const errorMessage = 'All configured providers failed to generate questions';
+        thinkingLogActions.error(errorMessage);
+        throw new Error(errorMessage);
     }
 
     /**

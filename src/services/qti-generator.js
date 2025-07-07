@@ -53,45 +53,45 @@ class QTIGeneratorService {
     }
   }
 
-  // PDF Processing - DISABLED
-  // async processPDF(file) {
-  //   try {
-  //     aiGenerationActions.setExtracting(true, 0);
+  // PDF Processing
+  async processPDF(file) {
+    try {
+      aiGenerationActions.setExtracting(true, 0);
 
-  //     // Convert file to ArrayBuffer for IPC transfer
-  //     const arrayBuffer = await file.arrayBuffer();
+      // Convert file to ArrayBuffer for IPC transfer
+      const arrayBuffer = await file.arrayBuffer();
 
-  //     // Update progress
-  //     aiGenerationActions.setExtracting(true, 25);
+      // Update progress
+      aiGenerationActions.setExtracting(true, 25);
 
-  //     // Extract text using existing PDF extraction logic (pass ArrayBuffer directly)
-  //     const extractedText = await this.extractPDFText(arrayBuffer);
+      // Extract text using existing PDF extraction logic (pass ArrayBuffer directly)
+      const extractedText = await this.extractPDFText(arrayBuffer);
 
-  //     // Update progress
-  //     aiGenerationActions.setExtracting(true, 100);
+      // Update progress
+      aiGenerationActions.setExtracting(true, 100);
 
-  //     // Update store with extracted text
-  //     aiGenerationActions.updateParams({ contextText: extractedText });
+      // Update store with extracted text
+      aiGenerationActions.updateParams({ contextText: extractedText });
 
-  //     // Clear extraction state
-  //     setTimeout(() => {
-  //       aiGenerationActions.setExtracting(false, 0);
-  //     }, 500);
+      // Clear extraction state
+      setTimeout(() => {
+        aiGenerationActions.setExtracting(false, 0);
+      }, 500);
 
-  //     return { success: true, text: extractedText };
-  //   } catch (error) {
-  //     aiGenerationActions.setExtracting(false, 0);
-  //     throw error;
-  //   }
-  // }
+      return { success: true, text: extractedText };
+    } catch (error) {
+      aiGenerationActions.setExtracting(false, 0);
+      throw error;
+    }
+  }
 
-  // async extractPDFText(arrayBuffer) {
-  //   const result = await window.electronAPI.extractText(arrayBuffer);
-  //   if (result.error) {
-  //     throw new Error(result.error);
-  //   }
-  //   return result;
-  // }
+  async extractPDFText(arrayBuffer) {
+    const result = await window.electronAPI.extractText(arrayBuffer);
+    if (result.error) {
+      throw new Error(result.error);
+    }
+    return result;
+  }
 
   // Question Generation
   async generateQuestions(params) {

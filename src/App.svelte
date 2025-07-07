@@ -2,6 +2,7 @@
   import Header from './components/Header.svelte';
   import LLMConfiguration from './components/LLMConfiguration.svelte';
   import AIGeneration from './components/AIGeneration.svelte';
+  import ThinkingCanvas from './components/ThinkingCanvas.svelte';
   import AssessmentDetails from './components/AssessmentDetails.svelte';
   import QuestionsSection from './components/QuestionsSection.svelte';
   import { assessmentStore } from './stores/assessment.js';
@@ -51,14 +52,14 @@
     }
   }
   
-  // async function handlePdfUploaded(event) {
-  //   try {
-  //     const { file } = event.detail;
-  //     await qtiGenerator.processPDF(file);
-  //   } catch (error) {
-  //     alert(`Error processing PDF: ${error.message}`);
-  //   }
-  // }
+  async function handlePdfUploaded(event) {
+    try {
+      const { file } = event.detail;
+      await qtiGenerator.processPDF(file);
+    } catch (error) {
+      alert(`Error processing PDF: ${error.message}`);
+    }
+  }
   
   async function handleGenerateQuestions(event) {
     try {
@@ -91,8 +92,10 @@
   <div class="content">
     <LLMConfiguration />
     <AIGeneration 
+      on:pdfUploaded={handlePdfUploaded}
       on:generateQuestions={handleGenerateQuestions}
     />
+    <ThinkingCanvas />
     <AssessmentDetails />
     <QuestionsSection />
   </div>

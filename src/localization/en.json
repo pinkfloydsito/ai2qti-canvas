@@ -9,11 +9,11 @@
   },
   "aiGeneration": {
     "title": "AI Question Generation",
-    "uploadPdf": "Upload PDF or Enter Text:",
-    "chooseFile": "Choose PDF File",
-    "contextText": "Or Enter Text Context:",
-    "contextPlaceholder": "Enter the content/context for question generation... (If PDF upload fails, copy and paste your content here)",
-    "tip": "💡 Tip: If PDF extraction doesn't work, you can copy text from your PDF and paste it here manually.",
+    "uploadPdf": "Enter Text:",
+    "chooseFile": "Choose File",
+    "contextText": "Text Context:",
+    "contextPlaceholder": "Enter the content/context for question generation...",
+    "tip": "💡 Tip: Paste your content here for question generation.",
     "questionCount": "Number of Questions:",
     "difficulty": "Difficulty Level:",
     "difficultyLevels": {
@@ -72,7 +72,7 @@
       "qtiExported": "QTI file exported successfully!",
       "assessmentLoaded": "Assessment loaded successfully!",
       "questionsGenerated": "Successfully generated {count} questions!",
-      "pdfExtracted": "✓ {filename} - Text extracted successfully!"
+      "textProcessed": "✓ Text processed successfully!"
     },
     "errors": {
       "saveError": "Error saving assessment: {error}",
@@ -80,8 +80,8 @@
       "xmlValidationError": "XML validation failed: {error}. Please check your content for special characters.",
       "loadError": "Error loading assessment: {error}",
       "parseError": "Error parsing assessment file",
-      "pdfError": "✗ {filename} - {error}",
-      "noContext": "Please provide context text or upload a PDF first.",
+      "textError": "✗ Text processing error: {error}",
+      "noContext": "Please provide context text first.",
       "noQuestionTypes": "Please select at least one question type.",
       "noApiKey": "Please enter your API key first.",
       "apiSetupError": "Error setting up API provider: {error}",
@@ -95,15 +95,21 @@
       "apiKeyInvalid": "API key is invalid",
       "usingCached": "Using cached API key"
     },
+    "thinking": {
+      "title": "AI Thinking Process",
+      "autoScroll": "Auto-scroll",
+      "clearLogs": "Clear logs",
+      "empty": "No thinking logs yet. AI thinking process will appear here during question generation."
+    },
     "placeholders": {
       "apiKeyCached": "Using cached API key...",
       "apiKeyEnter": "Enter your API key",
-      "pdfManualInput": "PDF extraction failed. Please copy and paste your content here manually..."
+      "manualInput": "Please paste your content here..."
     }
   },
   "processing": {
     "uploading": "Processing...",
-    "extractingPdf": "Extracting text from PDF...",
+    "processingText": "Processing text...",
     "validatingKey": "Validating API key...",
     "generatingQuestions": "Generating questions...",
     "exportingQti": "Exporting QTI file..."
