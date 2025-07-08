@@ -1,7 +1,6 @@
 import ProviderFactory from './llm-providers/provider-factory.js';
 import ConfigManager from './config/config-manager.js';
 import ApiKeyCache from './services/api-key-cache.js';
-import { thinkingLogActions } from './stores/thinking-log.js';
 
 import log from 'electron-log/main.js';
 
@@ -130,26 +129,26 @@ class LLMService {
 
         try {
           log.info(`🎯 Attempting generation with fallback provider: ${fallback.name}`);
-          thinkingLogActions.processing(`Sending request to fallback provider: ${fallback.name}`);
+          log.info(`📤 Sending request to fallback provider: ${fallback.name}`);
 
           const questions = await fallback.provider.generateQuestions(prompt, options);
-          thinkingLogActions.success(`Received response from ${fallback.name}`);
-          thinkingLogActions.processing('Validating and processing questions...');
+          log.info(`📥 Received response from ${fallback.name}`);
+          log.info('🔍 Validating and processing questions...');
 
           const processedQuestions = this.validateAndProcessQuestions(questions);
 
           log.info(`✅ Successfully generated ${processedQuestions.length} questions with ${fallback.name}`);
-          thinkingLogActions.success(`Generated ${processedQuestions.length} questions with ${fallback.name}`);
+          log.info(`📊 Generated ${processedQuestions.length} questions with ${fallback.name}`);
           return processedQuestions;
         } catch (error) {
           log.warn(`❌ Fallback provider ${fallback.name} failed:`, error.message);
-          thinkingLogActions.error(`Fallback provider ${fallback.name} failed: ${error.message}`);
+          log.error(`❌ Fallback provider ${fallback.name} failed: ${error.message}`);
         }
       }
     }
 
     const errorMessage = 'All configured providers failed to generate questions';
-    thinkingLogActions.error(errorMessage);
+    log.error(errorMessage);
     throw new Error(errorMessage);
   }
 
