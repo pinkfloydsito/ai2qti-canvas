@@ -97,8 +97,26 @@ function createWindow() {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
+    const indexPath = path.join(__dirname, 'dist/index.html');
+    log.info('Loading index.html from:', indexPath);
+    log.info('File exists:', fs.existsSync(indexPath));
+    log.info('__dirname:', __dirname);
+    
+    mainWindow.loadFile(indexPath).catch(error => {
+      log.error('Failed to load index.html:', error);
+    });
+    
+    // Add debugging for production
+    mainWindow.webContents.openDevTools();
   }
+
+  mainWindow.webContents.on('did-finish-load', () => {
+    log.info('Web contents finished loading');
+  });
+
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+    log.error('Failed to load:', errorCode, errorDescription, validatedURL);
+  });
 
   mainWindow.once('ready-to-show', () => {
     if (!isQuitting) {

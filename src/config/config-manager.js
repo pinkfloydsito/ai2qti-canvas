@@ -56,10 +56,25 @@ class ConfigManager {
 
   loadUserConfig() {
     try {
-      const userConfigPath = this.getUserConfigPath();
-      if (require('fs').existsSync(userConfigPath)) {
-        const userConfig = JSON.parse(require('fs').readFileSync(userConfigPath, 'utf8'));
-        this.mergeConfig(this.config, userConfig);
+      // Check if we're in renderer process (browser) or main process (Node.js)
+      if (typeof window !== 'undefined' && window.localStorage) {
+        // Renderer process - use localStorage
+        const userConfigStr = localStorage.getItem('qti-generator-config');
+        if (userConfigStr) {
+          const userConfig = JSON.parse(userConfigStr);
+          this.mergeConfig(this.config, userConfig);
+        }
+      } else if (typeof require !== 'undefined') {
+        // Main process - use file system
+        const fs = require('fs');
+        const path = require('path');
+        const os = require('os');
+        const userConfigPath = path.join(os.homedir(), '.qti-generator', 'config.json');
+        
+        if (fs.existsSync(userConfigPath)) {
+          const userConfig = JSON.parse(fs.readFileSync(userConfigPath, 'utf8'));
+          this.mergeConfig(this.config, userConfig);
+        }
       }
     } catch (error) {
       console.warn('Failed to load user config:', error.message);
@@ -68,23 +83,32 @@ class ConfigManager {
 
   saveUserConfig() {
     try {
-      const userConfigPath = this.getUserConfigPath();
-      const configDir = require('path').dirname(userConfigPath);
-
-      if (!require('fs').existsSync(configDir)) {
-        require('fs').mkdirSync(configDir, { recursive: true });
+      // Check if we're in renderer process (browser) or main process (Node.js)
+      if (typeof window !== 'undefined' && window.localStorage) {
+        // Renderer process - use localStorage
+        localStorage.setItem('qti-generator-config', JSON.stringify(this.config, null, 2));
+      } else if (typeof require !== 'undefined') {
+        // Main process - use file system
+        const fs = require('fs');
+        const path = require('path');
+        const os = require('os');
+        const userConfigPath = path.join(os.homedir(), '.qti-generator', 'config.json');
+        const configDir = path.dirname(userConfigPath);
+        
+        if (!fs.existsSync(configDir)) {
+          fs.mkdirSync(configDir, { recursive: true });
+        }
+        
+        fs.writeFileSync(userConfigPath, JSON.stringify(this.config, null, 2));
       }
-
-      require('fs').writeFileSync(userConfigPath, JSON.stringify(this.config, null, 2));
     } catch (error) {
       console.warn('Failed to save user config:', error.message);
     }
   }
 
   getUserConfigPath() {
-    const os = require('os');
-    const path = require('path');
-    return path.join(os.homedir(), '.qti-generator', 'config.json');
+    // No longer needed as we use localStorage
+    return 'qti-generator-config';
   }
 
   mergeConfig(target, source) {

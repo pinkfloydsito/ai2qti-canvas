@@ -1,57 +1,64 @@
 <script>
-  import Header from './components/Header.svelte';
-  import LLMConfiguration from './components/LLMConfiguration.svelte';
-  import AIGeneration from './components/AIGeneration.svelte';
-  import ThinkingCanvas from './components/ThinkingCanvas.svelte';
-  import AssessmentDetails from './components/AssessmentDetails.svelte';
-  import QuestionsSection from './components/QuestionsSection.svelte';
-  import { assessmentStore } from './stores/assessment.js';
-  import { llmStore } from './stores/llm.js';
-  import { t } from './stores/localization.js';
+  import Header from "./components/Header.svelte";
+  import LLMConfiguration from "./components/LLMConfiguration.svelte";
+  import AIGeneration from "./components/AIGeneration.svelte";
+  // import ThinkingCanvas from "./components/ThinkingCanvas.svelte";
+  import AssessmentDetails from "./components/AssessmentDetails.svelte";
+  import QuestionsSection from "./components/QuestionsSection.svelte";
+  import { assessmentStore } from "./stores/assessment.js";
+  import { llmStore } from "./stores/llm.js";
+  import { t } from "./stores/localization.js";
+
+  // Initialize services (dynamically imported to avoid conflicts)
+  let qtiGenerator;
   
-  // Initialize services (imported from existing code)
-  import { qtiGenerator } from './services/qti-generator.js';
-  
+  // Initialize QTI generator on component mount
+  import { onMount } from 'svelte';
+  onMount(async () => {
+    const { qtiGenerator: generator } = await import('./services/qti-generator.js');
+    qtiGenerator = generator;
+  });
+
   let assessment = $assessmentStore;
   let llmConfig = $llmStore;
 
   // Subscribe to store changes
-  assessmentStore.subscribe(value => {
+  assessmentStore.subscribe((value) => {
     assessment = value;
   });
 
-  llmStore.subscribe(value => {
+  llmStore.subscribe((value) => {
     llmConfig = value;
   });
-  
+
   // Event handlers
   async function handleNewAssessment() {
     qtiGenerator.newAssessment();
   }
-  
+
   async function handleSaveAssessment() {
     try {
       await qtiGenerator.saveAssessment(assessment);
-      alert('Assessment saved successfully!');
+      alert("Assessment saved successfully!");
     } catch (error) {
       alert(`Error saving assessment: ${error.message}`);
     }
   }
-  
+
   async function handleExportQTI() {
     try {
       if (assessment.questions.length === 0) {
-        alert($t('messages.errors.noQuestions'));
+        alert($t("messages.errors.noQuestions"));
         return;
       }
-      
+
       await qtiGenerator.exportQTI(assessment);
-      alert($t('messages.success.qtiExported'));
+      alert($t("messages.success.qtiExported"));
     } catch (error) {
-      alert($t('messages.errors.exportError', { error: error.message }));
+      alert($t("messages.errors.exportError", { error: error.message }));
     }
   }
-  
+
   async function handlePdfUploaded(event) {
     try {
       const { file } = event.detail;
@@ -60,42 +67,46 @@
       alert(`Error processing PDF: ${error.message}`);
     }
   }
-  
+
   async function handleGenerateQuestions(event) {
     try {
-      console.log('📱 App: Received generateQuestions event');
+      console.log("📱 App: Received generateQuestions event");
       const params = event.detail;
-      console.log('📱 App: Event params:', params);
-      
+      console.log("📱 App: Event params:", params);
+
       const result = await qtiGenerator.generateQuestions(params);
-      console.log('📱 App: Generation result:', result);
-      
+      console.log("📱 App: Generation result:", result);
+
       if (result.success) {
-        alert($t('messages.success.questionsGenerated', { count: result.questions.length }));
+        alert(
+          $t("messages.success.questionsGenerated", {
+            count: result.questions.length,
+          }),
+        );
       } else {
-        alert($t('messages.errors.generationError', { error: result.error }));
+        alert($t("messages.errors.generationError", { error: result.error }));
       }
     } catch (error) {
-      console.error('📱 App: Exception in handleGenerateQuestions:', error);
-      alert($t('messages.errors.generationError', { error: error.message }));
+      console.error("📱 App: Exception in handleGenerateQuestions:", error);
+      alert($t("messages.errors.generationError", { error: error.message }));
     }
   }
 </script>
 
 <main class="app">
-  <Header 
+  <Header
     on:newAssessment={handleNewAssessment}
     on:saveAssessment={handleSaveAssessment}
     on:exportQTI={handleExportQTI}
   />
-  
+
   <div class="content">
     <LLMConfiguration />
-    <AIGeneration 
+    <AIGeneration
       on:pdfUploaded={handlePdfUploaded}
       on:generateQuestions={handleGenerateQuestions}
     />
-    <ThinkingCanvas />
+    <!-- <ThinkingCanvas /> -->
     <AssessmentDetails />
     <QuestionsSection />
   </div>
@@ -109,7 +120,8 @@
   }
 
   :global(body) {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      sans-serif;
     background-color: #f5f5f5;
     color: #333;
     line-height: 1.6;
@@ -184,9 +196,7 @@
     font-weight: 500;
   }
 
-  :global(.form-group input,
-  .form-group select,
-  .form-group textarea) {
+  :global(.form-group input, .form-group select, .form-group textarea) {
     width: 100%;
     padding: 8px 12px;
     border: 1px solid #ddd;
@@ -194,9 +204,11 @@
     font-size: 14px;
   }
 
-  :global(.form-group input:focus,
-  .form-group select:focus,
-  .form-group textarea:focus) {
+  :global(
+      .form-group input:focus,
+      .form-group select:focus,
+      .form-group textarea:focus
+    ) {
     outline: none;
     border-color: #3498db;
     box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
