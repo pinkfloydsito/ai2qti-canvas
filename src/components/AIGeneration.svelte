@@ -1,134 +1,144 @@
 <script>
-  import { aiGenerationStore, aiGenerationActions } from '../stores/llm.js';
-  import { llmStore } from '../stores/llm.js';
-  import { assessmentActions } from '../stores/assessment.js';
-  import { createEventDispatcher } from 'svelte';
-  import { t } from '../stores/localization.js';
-  
+  import { aiGenerationStore, aiGenerationActions } from "../stores/llm.js";
+  import { llmStore } from "../stores/llm.js";
+  import { assessmentActions } from "../stores/assessment.js";
+  import { createEventDispatcher } from "svelte";
+  import { t } from "../stores/localization.js";
+
   const dispatch = createEventDispatcher();
-  
+
   let aiParams = $aiGenerationStore;
   let llmConfig = $llmStore;
   let fileInput;
-  
+
   // Subscribe to store changes
-  aiGenerationStore.subscribe(value => {
+  aiGenerationStore.subscribe((value) => {
     aiParams = value;
   });
-  
-  llmStore.subscribe(value => {
+
+  llmStore.subscribe((value) => {
     llmConfig = value;
   });
-  
+
   // Question type options
   $: questionTypeOptions = [
-    { value: 'multiple_choice', label: $t('aiGeneration.typeLabels.multipleChoice') },
-    { value: 'true_false', label: $t('aiGeneration.typeLabels.trueFalse') },
-    { value: 'short_answer', label: $t('aiGeneration.typeLabels.shortAnswer') },
-    { value: 'essay', label: $t('aiGeneration.typeLabels.essay') }
+    {
+      value: "multiple_choice",
+      label: $t("aiGeneration.typeLabels.multipleChoice"),
+    },
+    { value: "true_false", label: $t("aiGeneration.typeLabels.trueFalse") },
+    { value: "short_answer", label: $t("aiGeneration.typeLabels.shortAnswer") },
+    { value: "essay", label: $t("aiGeneration.typeLabels.essay") },
   ];
-  
+
   // PDF functionality disabled
-  // function handleFileUpload(event) {
-  //   const file = event.target.files[0];
-  //   if (file && file.type === 'application/pdf') {
-  //     aiGenerationActions.setPdfFile(file, file.name);
-  //     dispatch('pdfUploaded', { file });
-  //   }
-  // }
-  // 
-  // function triggerFileUpload() {
-  //   fileInput.click();
-  // }
-  
+  function handleFileUpload(event) {
+    // const file = event.target.files[0];
+    // if (file && file.type === 'application/pdf') {
+    //   aiGenerationActions.setPdfFile(file, file.name);
+    //   dispatch('pdfUploaded', { file });
+    // }
+
+    console.error("PDF functionality is disabled in this version.");
+  }
+
+  function triggerFileUpload() {
+    console.error("PDF functionality is disabled in this version.");
+  }
+
   function handleContextTextChange(event) {
     aiGenerationActions.updateParams({ contextText: event.target.value });
   }
-  
+
   function handleQuestionCountChange(event) {
-    aiGenerationActions.updateParams({ questionCount: parseInt(event.target.value) });
+    aiGenerationActions.updateParams({
+      questionCount: parseInt(event.target.value),
+    });
   }
-  
+
   function handleDifficultyChange(event) {
     aiGenerationActions.updateParams({ difficultyLevel: event.target.value });
   }
-  
+
   function handleQuestionTypeChange(event) {
     const checkbox = event.target;
     const value = checkbox.value;
     let newTypes = [...aiParams.questionTypes];
-    
+
     if (checkbox.checked) {
       if (!newTypes.includes(value)) {
         newTypes.push(value);
       }
     } else {
-      newTypes = newTypes.filter(type => type !== value);
+      newTypes = newTypes.filter((type) => type !== value);
     }
-    
+
     aiGenerationActions.updateParams({ questionTypes: newTypes });
   }
-  
+
   function handleIncludeMathChange(event) {
     aiGenerationActions.updateParams({ includeMath: event.target.checked });
   }
-  
+
   async function generateQuestions() {
-    console.log('🤖 AIGeneration: Generate button clicked');
-    console.log('🔧 AIGeneration: LLM configured?', llmConfig.isConfigured);
-    console.log('📝 AIGeneration: Context text:', aiParams.contextText?.substring(0, 100) + '...');
-    console.log('📄 AIGeneration: PDF file:', aiParams.pdfFile?.name);
-    console.log('🎯 AIGeneration: Question types:', aiParams.questionTypes);
-    
+    console.log("🤖 AIGeneration: Generate button clicked");
+    console.log("🔧 AIGeneration: LLM configured?", llmConfig.isConfigured);
+    console.log(
+      "📝 AIGeneration: Context text:",
+      aiParams.contextText?.substring(0, 100) + "...",
+    );
+    console.log("📄 AIGeneration: PDF file:", aiParams.pdfFile?.name);
+    console.log("🎯 AIGeneration: Question types:", aiParams.questionTypes);
+
     if (!llmConfig.isConfigured) {
-      alert('Please configure your LLM provider first.');
+      alert("Please configure your LLM provider first.");
       return;
     }
-    
+
     if (!aiParams.contextText && !aiParams.pdfFile) {
-      alert($t('messages.errors.noContext'));
+      alert($t("messages.errors.noContext"));
       return;
     }
-    
+
     if (aiParams.questionTypes.length === 0) {
-      alert($t('messages.errors.noQuestionTypes'));
+      alert($t("messages.errors.noQuestionTypes"));
       return;
     }
-    
-    console.log('🚀 AIGeneration: Dispatching generateQuestions event');
-    dispatch('generateQuestions', {
+
+    console.log("🚀 AIGeneration: Dispatching generateQuestions event");
+    dispatch("generateQuestions", {
       contextText: aiParams.contextText,
       pdfFile: aiParams.pdfFile,
       questionCount: aiParams.questionCount,
       difficultyLevel: aiParams.difficultyLevel,
       questionTypes: aiParams.questionTypes,
-      includeMath: aiParams.includeMath
+      includeMath: aiParams.includeMath,
     });
   }
-  
+
   function clearPdf() {
     aiGenerationActions.clearPdf();
     if (fileInput) {
-      fileInput.value = '';
+      fileInput.value = "";
     }
   }
 </script>
 
 <section class="ai-generation-section">
-  <h2>{$t('aiGeneration.title')}</h2>
+  <h2>{$t("aiGeneration.title")}</h2>
   <div class="ai-controls">
     <div class="form-group">
-      <label for="pdfUpload">{$t('aiGeneration.uploadPdf')}</label>
+      <label for="pdfUpload">{$t("aiGeneration.uploadPdf")}</label>
       <div class="upload-area">
-        <input 
-          type="file" 
+        <input
+          type="file"
           bind:this={fileInput}
-          accept=".pdf" 
+          accept=".pdf"
           style="display: none;"
           on:change={handleFileUpload}
         />
         <button class="btn btn-secondary" on:click={triggerFileUpload}>
-          {$t('aiGeneration.chooseFile')}
+          {$t("aiGeneration.chooseFile")}
         </button>
         {#if aiParams.fileName}
           <span class="file-name">
@@ -139,59 +149,69 @@
         {#if aiParams.isExtracting}
           <div class="extraction-progress">
             <div class="progress-bar">
-              <div class="progress-fill" style="width: {aiParams.extractionProgress}%"></div>
+              <div
+                class="progress-fill"
+                style="width: {aiParams.extractionProgress}%"
+              ></div>
             </div>
-            <span>{$t('processing.extractingPdf')} {aiParams.extractionProgress}%</span>
+            <span
+              >{$t("processing.extractingPdf")}
+              {aiParams.extractionProgress}%</span
+            >
           </div>
         {/if}
       </div>
     </div>
-    
+
     <div class="form-group">
-      <label for="contextText">{$t('aiGeneration.contextText')}</label>
-      <textarea 
-        id="contextText" 
-        placeholder="{$t('aiGeneration.contextPlaceholder')}" 
+      <label for="contextText">{$t("aiGeneration.contextText")}</label>
+      <textarea
+        id="contextText"
+        placeholder={$t("aiGeneration.contextPlaceholder")}
         rows="6"
         value={aiParams.contextText}
         on:input={handleContextTextChange}
       ></textarea>
-      <small>{$t('aiGeneration.tip')}</small>
+      <small>{$t("aiGeneration.tip")}</small>
     </div>
-    
+
     <div class="form-group">
-      <label for="questionCount">{$t('aiGeneration.questionCount')}</label>
-      <input 
-        type="number" 
-        id="questionCount" 
-        value={aiParams.questionCount} 
-        min="1" 
+      <label for="questionCount">{$t("aiGeneration.questionCount")}</label>
+      <input
+        type="number"
+        id="questionCount"
+        value={aiParams.questionCount}
+        min="1"
         max="20"
         on:input={handleQuestionCountChange}
       />
     </div>
-    
+
     <div class="form-group">
-      <label for="difficultyLevel">{$t('aiGeneration.difficulty')}</label>
-      <select 
-        id="difficultyLevel" 
+      <label for="difficultyLevel">{$t("aiGeneration.difficulty")}</label>
+      <select
+        id="difficultyLevel"
         value={aiParams.difficultyLevel}
         on:change={handleDifficultyChange}
       >
-        <option value="easy">{$t('aiGeneration.difficultyLevels.easy')}</option>
-        <option value="medium">{$t('aiGeneration.difficultyLevels.medium')}</option>
-        <option value="hard">{$t('aiGeneration.difficultyLevels.hard')}</option>
-        <option value="mixed">{$t('aiGeneration.difficultyLevels.mixed')}</option>
+        <option value="easy">{$t("aiGeneration.difficultyLevels.easy")}</option>
+        <option value="medium"
+          >{$t("aiGeneration.difficultyLevels.medium")}</option
+        >
+        <option value="hard">{$t("aiGeneration.difficultyLevels.hard")}</option>
+        <option value="mixed"
+          >{$t("aiGeneration.difficultyLevels.mixed")}</option
+        >
       </select>
     </div>
-    
+
     <div class="form-group">
-      <label>{$t('aiGeneration.questionTypes')}</label>
+      <label>{$t("aiGeneration.questionTypes")}</label>
       <div class="checkbox-group">
         {#each questionTypeOptions as option}
           <label class="checkbox-label">
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               value={option.value}
               checked={aiParams.questionTypes.includes(option.value)}
               on:change={handleQuestionTypeChange}
@@ -201,27 +221,27 @@
         {/each}
       </div>
     </div>
-    
+
     <div class="form-group">
       <label class="checkbox-label">
-        <input 
-          type="checkbox" 
+        <input
+          type="checkbox"
           checked={aiParams.includeMath}
           on:change={handleIncludeMathChange}
         />
-        {$t('aiGeneration.includeMath')}
+        {$t("aiGeneration.includeMath")}
       </label>
     </div>
-    
-    <button 
-      class="btn btn-primary generate-btn" 
+
+    <button
+      class="btn btn-primary generate-btn"
       on:click={generateQuestions}
       disabled={llmConfig.isGenerating || !llmConfig.isConfigured}
     >
       {#if llmConfig.isGenerating}
-        🤖 {$t('aiGeneration.generating')}
+        🤖 {$t("aiGeneration.generating")}
       {:else}
-        {$t('aiGeneration.generateBtn')}
+        {$t("aiGeneration.generateBtn")}
       {/if}
     </button>
   </div>
@@ -235,26 +255,26 @@
     padding: 20px;
     margin-bottom: 20px;
   }
-  
+
   .ai-generation-section h2 {
     margin-bottom: 15px;
     color: #0c5460;
     font-size: 18px;
     font-weight: 600;
   }
-  
+
   .ai-controls {
     display: grid;
     gap: 15px;
   }
-  
+
   .upload-area {
     display: flex;
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
   }
-  
+
   .file-name {
     display: flex;
     align-items: center;
@@ -265,7 +285,7 @@
     color: #155724;
     font-size: 14px;
   }
-  
+
   .btn-clear-file {
     background: none;
     border: none;
@@ -280,11 +300,11 @@
     justify-content: center;
     border-radius: 2px;
   }
-  
+
   .btn-clear-file:hover {
     background: rgba(0, 0, 0, 0.1);
   }
-  
+
   .extraction-progress {
     display: flex;
     align-items: center;
@@ -292,7 +312,7 @@
     font-size: 14px;
     color: #0c5460;
   }
-  
+
   .progress-bar {
     width: 200px;
     height: 8px;
@@ -300,19 +320,19 @@
     border-radius: 4px;
     overflow: hidden;
   }
-  
+
   .progress-fill {
     height: 100%;
     background: linear-gradient(90deg, #17a2b8, #20c997);
     transition: width 0.3s ease;
   }
-  
+
   .checkbox-group {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 10px;
   }
-  
+
   .checkbox-label {
     display: flex;
     align-items: center;
@@ -320,12 +340,12 @@
     cursor: pointer;
     font-weight: normal;
   }
-  
+
   .checkbox-label input[type="checkbox"] {
     width: auto;
     margin: 0;
   }
-  
+
   .generate-btn {
     padding: 12px 24px;
     font-size: 16px;
@@ -333,24 +353,25 @@
     justify-self: start;
     min-width: 200px;
   }
-  
+
   .generate-btn:disabled {
     background: #6c757d;
     cursor: not-allowed;
   }
-  
+
   @media (max-width: 768px) {
     .upload-area {
       flex-direction: column;
       align-items: stretch;
     }
-    
+
     .checkbox-group {
       grid-template-columns: 1fr;
     }
-    
+
     .generate-btn {
       justify-self: stretch;
     }
   }
 </style>
+
