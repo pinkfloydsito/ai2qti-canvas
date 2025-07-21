@@ -10,6 +10,7 @@
   let aiParams = $aiGenerationStore;
   let llmConfig = $llmStore;
   let fileInput;
+  let attachedFiles = [];
 
   // Subscribe to store changes
   aiGenerationStore.subscribe((value) => {
@@ -31,19 +32,41 @@
     { value: "essay", label: $t("aiGeneration.typeLabels.essay") },
   ];
 
-  // PDF functionality disabled
-  function handleFileUpload(event) {
-    // const file = event.target.files[0];
-    // if (file && file.type === 'application/pdf') {
-    //   aiGenerationActions.setPdfFile(file, file.name);
-    //   dispatch('pdfUploaded', { file });
-    // }
-
-    console.error("PDF functionality is disabled in this version.");
+  // File upload functionality
+  async function handleFileUpload(event) {
+    const files = Array.from(event.target.files);
+    
+    for (const file of files) {
+      const ext = file.name.toLowerCase().split('.').pop();
+      
+      if (!['pdf', 'tex', 'txt'].includes(ext)) {
+        alert(`Unsupported file type: .${ext}. Supported: .pdf, .tex, .txt`);
+        continue;
+      }
+      
+      // Create temporary file path for processing
+      const tempPath = await window.electronAPI.saveTemporaryFile(file);
+      
+      attachedFiles = [...attachedFiles, {
+        name: file.name,
+        path: tempPath,
+        type: ext,
+        size: file.size
+      }];
+    }
+    
+    // Clear file input
+    if (fileInput) {
+      fileInput.value = '';
+    }
   }
 
   function triggerFileUpload() {
-    console.error("PDF functionality is disabled in this version.");
+    fileInput?.click();
+  }
+  
+  function removeFile(index) {
+    attachedFiles = attachedFiles.filter((_, i) => i !== index);
   }
 
   function handleContextTextChange(event) {
@@ -95,7 +118,7 @@
       return;
     }
 
-    if (!aiParams.contextText && !aiParams.pdfFile) {
+    if (!aiParams.contextText && !aiParams.pdfFile && attachedFiles.length === 0) {
       alert($t("messages.errors.noContext"));
       return;
     }
@@ -109,6 +132,7 @@
     dispatch("generateQuestions", {
       contextText: aiParams.contextText,
       pdfFile: aiParams.pdfFile,
+      attachments: attachedFiles,
       questionCount: aiParams.questionCount,
       difficultyLevel: aiParams.difficultyLevel,
       questionTypes: aiParams.questionTypes,
@@ -133,18 +157,30 @@
         <input
           type="file"
           bind:this={fileInput}
-          accept=".pdf"
+          accept=".pdf,.tex,.txt"
+          multiple
           style="display: none;"
           on:change={handleFileUpload}
         />
         <button class="btn btn-secondary" on:click={triggerFileUpload}>
-          {$t("aiGeneration.chooseFile")}
+          📎 {$t("aiGeneration.chooseFile")}
         </button>
         {#if aiParams.fileName}
           <span class="file-name">
             📄 {aiParams.fileName}
             <button class="btn-clear-file" on:click={clearPdf}>×</button>
           </span>
+        {/if}
+        
+        {#if attachedFiles.length > 0}
+          <div class="attached-files">
+            {#each attachedFiles as file, index}
+              <span class="attached-file">
+                📎 {file.name} ({(file.size / 1024).toFixed(1)}KB)
+                <button class="btn-clear-file" on:click={() => removeFile(index)}>×</button>
+              </span>
+            {/each}
+          </div>
         {/if}
         {#if aiParams.isExtracting}
           <div class="extraction-progress">
@@ -303,6 +339,24 @@
 
   .btn-clear-file:hover {
     background: rgba(0, 0, 0, 0.1);
+  }
+
+  .attached-files {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 10px;
+  }
+
+  .attached-file {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #e7f3ff;
+    padding: 5px 10px;
+    border-radius: 4px;
+    color: #004085;
+    font-size: 14px;
   }
 
   .extraction-progress {

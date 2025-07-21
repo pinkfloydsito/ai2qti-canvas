@@ -233,9 +233,32 @@ function createMenu() {
   Menu.setApplicationMenu(menu);
 }
 
-function gracefulQuit() {
+async function gracefulQuit() {
   log.info('Graceful quit initiated');
   isQuitting = true;
+
+  // Cleanup temporary files
+  try {
+    const tempDir = path.join(__dirname, 'temp');
+    if (fs.existsSync(tempDir)) {
+      const files = fs.readdirSync(tempDir);
+      for (const file of files) {
+        try {
+          fs.unlinkSync(path.join(tempDir, file));
+        } catch (error) {
+          log.warn('Failed to cleanup temp file during quit:', file);
+        }
+      }
+      // Try to remove temp directory if empty
+      try {
+        fs.rmdirSync(tempDir);
+      } catch (error) {
+        // Directory not empty or other error, ignore
+      }
+    }
+  } catch (error) {
+    log.warn('Error during temp file cleanup:', error);
+  }
 
   if (mainWindow) {
     mainWindow.removeAllListeners('close');
@@ -345,6 +368,50 @@ ipcMain.handle('load-assessment', safeHandler(async (event) => {
   }
 
   return { success: false, canceled: true };
+}));
+
+// File upload handlers for AI attachments
+ipcMain.handle('save-temporary-file', safeHandler(async (_, fileBuffer, fileName) => {
+  const tempDir = path.join(__dirname, 'temp');
+  
+  // Ensure temp directory exists
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
+  }
+  
+  // Generate unique filename to avoid conflicts
+  const timestamp = Date.now();
+  const tempFileName = `${timestamp}_${fileName}`;
+  const tempPath = path.join(tempDir, tempFileName);
+  
+  // Write file buffer to temp location
+  fs.writeFileSync(tempPath, Buffer.from(fileBuffer));
+  
+  log.info('Temporary file saved:', tempPath);
+  return { success: true, tempPath };
+}));
+
+ipcMain.handle('cleanup-temporary-files', safeHandler(async (_) => {
+  const tempDir = path.join(__dirname, 'temp');
+  
+  if (fs.existsSync(tempDir)) {
+    const files = fs.readdirSync(tempDir);
+    let deletedCount = 0;
+    
+    for (const file of files) {
+      try {
+        fs.unlinkSync(path.join(tempDir, file));
+        deletedCount++;
+      } catch (error) {
+        log.warn('Failed to delete temp file:', file, error.message);
+      }
+    }
+    
+    log.info(`Cleaned up ${deletedCount} temporary files`);
+    return { success: true, deletedCount };
+  }
+  
+  return { success: true, deletedCount: 0 };
 }));
 
 // PDF handlers disabled to prevent DOMMatrix issues

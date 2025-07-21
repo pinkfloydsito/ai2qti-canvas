@@ -32,4 +32,5 @@ Thumbs.db
 
 # Electron
 *.log
+temp/
 CLAUDE.md

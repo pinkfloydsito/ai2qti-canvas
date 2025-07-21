@@ -105,17 +105,22 @@ class QTIGeneratorService {
         questionCount,
         difficultyLevel,
         questionTypes,
-        includeMath
+        includeMath,
+        attachments = []
       } = params;
 
       console.log('🔧 Generating questions via IPC');
+      if (attachments.length > 0) {
+        console.log('📎 Including attachments:', attachments.map(f => f.name).join(', '));
+      }
 
       // Use the LLM service to generate questions via IPC
       const result = await window.electronAPI.generateQuestions(contextText, {
         questionCount,
         difficulty: difficultyLevel,
         questionTypes,
-        includeMath
+        includeMath,
+        attachments
       });
 
       if (!result.success) {

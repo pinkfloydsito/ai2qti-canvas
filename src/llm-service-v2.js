@@ -92,6 +92,7 @@ class LLMService {
       difficulty = 'medium',
       questionTypes = ['multiple_choice'],
       includeMath = true,
+      attachments = [],
       maxRetries = this.config.maxRetries
     } = options;
 
@@ -102,11 +103,23 @@ class LLMService {
       includeMath
     });
 
+    // Prepare options with attachments for provider
+    const providerOptions = {
+      ...options,
+      attachments: attachments.map(file => ({
+        filePath: file.path,
+        type: file.type
+      }))
+    };
+
     // Try primary provider first
     if (this.currentProvider) {
       try {
         log.info(`🎯 Attempting generation with primary provider: ${this.providerName}`);
-        const questions = await this.currentProvider.generateQuestions(prompt, options);
+        if (attachments.length > 0) {
+          log.info(`📎 Using ${attachments.length} attachment(s): ${attachments.map(f => f.name).join(', ')}`);
+        }
+        const questions = await this.currentProvider.generateQuestions(prompt, providerOptions);
         return this.validateAndProcessQuestions(questions);
       } catch (error) {
         log.warn(`❌ Primary provider ${this.providerName} failed:`, error.message);
@@ -131,7 +144,7 @@ class LLMService {
           log.info(`🎯 Attempting generation with fallback provider: ${fallback.name}`);
           log.info(`📤 Sending request to fallback provider: ${fallback.name}`);
 
-          const questions = await fallback.provider.generateQuestions(prompt, options);
+          const questions = await fallback.provider.generateQuestions(prompt, providerOptions);
           log.info(`📥 Received response from ${fallback.name}`);
           log.info('🔍 Validating and processing questions...');
 
