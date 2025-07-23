@@ -199,7 +199,10 @@ class GeminiProvider extends BaseLLMProvider {
         const contents = this.createContentPayload(prompt, processedAttachments);
         const result = await this.client.models.generateContent({ model, contents });
 
-        await this.writeDebugFile(model, result.text, prompt, options);
+        // dev mode:
+        if (this.config.debug) {
+          await this.writeDebugFile(model, result.text, prompt, options);
+        }
 
         return this.parseModelResponse(result.text, model);
       } catch (error) {

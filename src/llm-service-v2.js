@@ -107,10 +107,16 @@ class LLMService {
     // Prepare options with attachments for provider
     const providerOptions = {
       ...options,
-      attachments: attachments.map(file => ({
-        filePath: file.path,
-        type: file.type
-      }))
+      attachments: attachments.map(file => {
+        if (!file.path) {
+          log.error('❌ Attachment missing file path:', JSON.stringify(file));
+          throw new Error(`Attachment file path is missing for file: ${file.name || 'unknown'}`);
+        }
+        return {
+          filePath: file.path,
+          type: file.type
+        };
+      })
     };
 
     // Try primary provider first

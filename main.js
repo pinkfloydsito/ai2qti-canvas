@@ -372,7 +372,7 @@ ipcMain.handle('load-assessment', safeHandler(async (event) => {
 
 // File upload handlers for AI attachments
 ipcMain.handle('save-temporary-file', safeHandler(async (_, fileBuffer, fileName) => {
-  const tempDir = path.join(__dirname, 'temp');
+  const tempDir = path.join(app.getPath('temp'), 'qti-generator');
   
   // Ensure temp directory exists
   if (!fs.existsSync(tempDir)) {
@@ -392,7 +392,7 @@ ipcMain.handle('save-temporary-file', safeHandler(async (_, fileBuffer, fileName
 }));
 
 ipcMain.handle('cleanup-temporary-files', safeHandler(async (_) => {
-  const tempDir = path.join(__dirname, 'temp');
+  const tempDir = path.join(app.getPath('temp'), 'qti-generator');
   
   if (fs.existsSync(tempDir)) {
     const files = fs.readdirSync(tempDir);
