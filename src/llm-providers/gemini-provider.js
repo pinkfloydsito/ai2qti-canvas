@@ -4,6 +4,28 @@ import JSONExtractor from './json-extractor.js';
 import fs from 'fs';
 import path from 'path';
 
+const SUPPORTED_FILE_TYPES = new Map([
+  [".pdf", "application/pdf"],
+  [".tex", "text/plain"],
+  [".txt", "text/plain"],
+])
+
+const ERROR_MESSAGES = {
+  FILE_NOT_FOUND: 'Attachment file not found:',
+  UNSUPPORTED_FILE_TYPE: 'Unsupported file type. Supported:',
+  MODEL_FAILURE: 'All Gemini models failed. Last error:',
+  JSON_PARSE_FAILURE: 'Failed to parse LLM response as JSON:',
+};
+
+const MODELS_TO_TRY = [
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite-preview-06-17',
+  'gemini-2.0-flash',
+  'gemini-2.5-pro-preview-tts',
+  'gemini-2.0-flash'
+]
+
+
 /**
  * Google Gemini LLM Provider implementation
  * Follows Single Responsibility Principle (SRP) - only handles Gemini interactions
@@ -11,13 +33,8 @@ import path from 'path';
 class GeminiProvider extends BaseLLMProvider {
   constructor() {
     super('gemini', {
-      models: [
-        'gemini-2.5-flash',
-        'gemini-2.5-flash-lite-preview-06-17',
-        'gemini-2.0-flash',
-        'gemini-2.5-pro-preview-tts',
-        'gemini-2.0-flash'
-      ],
+      models: MODELS_TO_TRY,
+      debugdir: path.join(process.cwd(), 'llm-debug-logs'),
       supportsStreaming: true,
       maxTokens: 8192,
       rateLimits: {
@@ -32,9 +49,50 @@ class GeminiProvider extends BaseLLMProvider {
       this.client = new GoogleGenAI({
         apiKey: this.apiKey
       });
-      console.log('Gemini client initialized successfully');
     } catch (error) {
       throw new Error(`Failed to initialize Gemini client: ${error.message}`);
+    }
+  }
+
+  /**
+   * Writes debug information to a file
+   * @param {string} model - Model used for generation
+   * @param {string} responseText - Raw response from LLM
+   * @param {string} prompt - Original prompt
+   * @param {Object} options - Generation options
+   * @param {Error|null} error - Optional error object
+   */
+  async writeDebugFile(model, responseText, prompt, options, error = null) {
+    try {
+      await fs.promises.mkdir(this.config.debugdir, { recursive: true });
+
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const status = error ? 'error' : 'success';
+      const filename = `gemini-${model}-${timestamp}-${status}.json`;
+      const filePath = path.join(this.config.debugdir, filename);
+
+      const debugData = {
+        metadata: {
+          timestamp: new Date().toISOString(),
+          model,
+          status,
+          error: error ? error.message : null,
+          stack: error ? error.stack : null
+        },
+        input: {
+          prompt: prompt.substring(0, 500) + (prompt.length > 500 ? '...' : ''), // Truncated prompt
+          attachments: options.attachments ? options.attachments.map(a => a.filePath) : [],
+          options: { ...options, attachments: undefined } // Don't include full attachment objects
+        },
+        output: {
+          rawResponse: responseText,
+        }
+      };
+
+      await fs.promises.writeFile(filePath, JSON.stringify(debugData, null, 2));
+      console.debug(`[GeminiDebug] Wrote debug file: ${filename}`);
+    } catch (writeError) {
+      console.error('[GeminiDebug] Failed to write debug file:', writeError);
     }
   }
 
@@ -50,177 +108,165 @@ class GeminiProvider extends BaseLLMProvider {
         file: filePath,
         config: { mimeType }
       });
-
-      console.log(`✅ File uploaded successfully: ${uploadResult.name}`);
-      console.log(`   URI: ${uploadResult.uri}`);
-
       return uploadResult;
     } catch (error) {
-      console.error(`❌ Failed to upload file ${filePath}:`, error.message);
       throw new Error(`File upload failed: ${error.message}`);
     }
   }
 
   /**
-   * Process attachments for Gemini AI
-   * @param {Array} attachments - Array of attachment objects with filePath and type
-   * @returns {Promise<Array>} Array of processed attachment objects for Gemini
+   * Determines MIME type from file extension
+   * @param {string} filePath
+   * @returns {string}
+   * @throws {Error} For unsupported types
+   */
+  getMimeType(filePath) {
+    const extension = path.extname(filePath).toLowerCase();
+    const mimeType = SUPPORTED_FILE_TYPES.get(extension);
+
+    if (!mimeType) {
+      const supportedTypes = [...SUPPORTED_FILE_TYPES.keys()].join(', ');
+      throw new Error(`${ERROR_MESSAGES.UNSUPPORTED_FILE_TYPE} ${supportedTypes}`);
+    }
+
+    return mimeType;
+  }
+
+  /**
+   * Processes attachments for Gemini API
+   * @param {Array<{filePath: string, type: string}>} attachments
+   * @returns {Promise<Array<{fileData: {mimeType: string, fileUri: string}}>>}
    */
   async processAttachments(attachments) {
-    const processedAttachments = [];
+    return Promise.all(
+      attachments.map(async ({ filePath }) => {
+        await this.validateFileExists(filePath);
+        const mimeType = this.getMimeType(filePath);
+        const { uri, mimeType: verifiedMimeType } = await this.uploadFile(filePath, mimeType);
 
-    for (const attachment of attachments) {
-      const { filePath, type } = attachment;
-
-      if (!fs.existsSync(filePath)) {
-        throw new Error(`Attachment file not found: ${filePath}`);
-      }
-
-      let mimeType;
-      const ext = path.extname(filePath).toLowerCase();
-
-      switch (ext) {
-        case '.pdf':
-          mimeType = 'application/pdf';
-          break;
-        case '.tex':
-        case '.txt':
-          mimeType = 'text/plain';
-          break;
-        default:
-          throw new Error(`Unsupported file type: ${ext}. Supported: .pdf, .tex, .txt`);
-      }
-
-      try {
-        const uploadedFile = await this.uploadFile(filePath, mimeType);
-        processedAttachments.push({
+        return {
           fileData: {
-            mimeType: uploadedFile.mimeType,
-            fileUri: uploadedFile.uri
-          }
-        });
-      } catch (error) {
-        console.error(`Failed to process attachment ${filePath}:`, error.message);
-        throw error;
-      }
-    }
-
-    return processedAttachments;
+            mimeType: verifiedMimeType,
+            fileUri: uri,
+          },
+        };
+      })
+    );
   }
 
+  /**
+   * Validates file existence
+   * @param {string} filePath
+   * @throws {Error} If file doesn't exist
+   */
+  async validateFileExists(filePath) {
+    try {
+      await fs.promises.access(filePath);
+    } catch {
+      throw new Error(`${ERROR_MESSAGES.FILE_NOT_FOUND} ${filePath}`);
+    }
+  }
+
+  /**
+   * Creates content payload for Gemini API
+   * @param {string} prompt
+   * @param {Array} attachments
+   * @returns {Array} Content array
+   */
+  createContentPayload(prompt, attachments) {
+    const parts = [{ text: prompt }];
+    if (attachments.length > 0) {
+      parts.push(...attachments);
+    }
+    return [{ parts }];
+  }
+
+  /**
+    * Executes content generation with model fallback
+    * @param {string} prompt
+    * @param {Object} options
+    * @returns {Promise<Array>} Generated questions
+    * @throws {Error} When all models fail
+    */
   async performGeneration(prompt, options = {}) {
-    const { model = this.config.models[0], maxRetries = 3, attachments = [] } = options;
+    const { attachments = [] } = options;
+    const processedAttachments = attachments.length
+      ? await this.processAttachments(attachments)
+      : [];
 
-    let lastError = null;
-    const modelsToTry = this.config.models;
-
-    // Process attachments if provided
-    let processedAttachments = [];
-    if (attachments && attachments.length > 0) {
+    for (const [index, model] of this.config.models.entries()) {
       try {
-        console.log(`Processing ${attachments.length} attachment(s)...`);
-        processedAttachments = await this.processAttachments(attachments);
-        console.log(`✅ Successfully processed ${processedAttachments.length} attachment(s)`);
+        const contents = this.createContentPayload(prompt, processedAttachments);
+        const result = await this.client.models.generateContent({ model, contents });
+
+        await this.writeDebugFile(model, result.text, prompt, options);
+
+        return this.parseModelResponse(result.text, model);
       } catch (error) {
-        console.error('❌ Failed to process attachments:', error.message);
-        throw new Error(`Attachment processing failed: ${error.message}`);
+        this.handleModelError(error, model, index);
       }
     }
 
-    // Try each model in sequence until one works (Open/Closed Principle)
-    for (let i = 0; i < modelsToTry.length; i++) {
-      const currentModel = modelsToTry[i];
-
-      try {
-        console.log(`Attempting generation with Gemini model: ${currentModel} (${i + 1}/${modelsToTry.length})`);
-
-        // Prepare content with attachments
-        let contents;
-        if (processedAttachments.length > 0) {
-          const parts = [
-            { text: prompt },
-            ...processedAttachments
-          ];
-          contents = [{ parts }];
-        } else {
-          contents = [{ parts: [{ text: prompt }] }];
-        }
-
-        const result = await this.client.models.generateContent({
-          model: currentModel,
-          contents
-        });
-        const text = result.text;
-
-        console.log(`✅ ${currentModel} - Response received: ${text.length} characters`);
-
-        // Extract and parse JSON from response using unified extractor
-        const cleanText = JSONExtractor.extractJSONFromResponse(text, 'Gemini');
-        const parsedQuestions = JSONExtractor.validateQuestionsStructure(cleanText);
-
-        console.log(`✅ ${currentModel} - Successfully parsed ${parsedQuestions.questions.length} questions`);
-        return parsedQuestions.questions;
-
-      } catch (error) {
-        lastError = error;
-        console.warn(`❌ ${currentModel} failed: ${error.message}`);
-
-        if (i === modelsToTry.length - 1) {
-          console.error('🚨 All Gemini models failed. Throwing last error.');
-          break;
-        }
-
-        console.log(`⏭️  Trying next model...`);
-        continue;
-      }
-    }
-
-    // If we get here, all models failed
-    console.error('💥 All Gemini models exhausted');
-    if (lastError instanceof SyntaxError) {
-      throw new Error(`Failed to parse LLM response as JSON (tried ${modelsToTry.length} models): ${lastError.message}`);
-    }
-    throw new Error(`All Gemini models failed (tried ${modelsToTry.length} models). Last error: ${lastError.message}`);
+    throw new Error(`${ERROR_MESSAGES.MODEL_FAILURE} ${lastError.message}`);
   }
 
+  /**
+    * Parses and validates model response
+    * @param {string} responseText
+    * @param {string} modelName
+    * @returns {Array}
+    * @throws {SyntaxError} For invalid JSON
+    */
+  parseModelResponse(responseText, modelName) {
+    const cleanText = JSONExtractor.extractJSONFromResponse(responseText, 'Gemini');
+    const parsedQuestions = JSONExtractor.validateQuestionsStructure(cleanText);
+    return parsedQuestions.questions;
+  }
+
+  /**
+   * Handles model errors during generation
+   * @param {Error} error
+   * @param {string} model
+   * @param {number} index
+   */
+  handleModelError(error, model, index) {
+    if (error instanceof SyntaxError) {
+      throw new Error(`${ERROR_MESSAGES.JSON_PARSE_FAILURE} ${error.message}`);
+    }
+
+    if (index === this.config.models.length - 1) {
+      lastError = error;
+      throw new Error(`${ERROR_MESSAGES.MODEL_FAILURE} ${error.message}`);
+    }
+  }
+
+  /**
+   * Tests API key validity
+   * @returns {Promise<boolean>}
+   * @throws {Error} When all models fail
+   */
   async performApiKeyTest() {
-    const modelsToTest = this.config.models;
+    const testPrompt = 'Respond with exactly: "API_KEY_VALID"';
 
-    for (let i = 0; i < modelsToTest.length; i++) {
-      const modelName = modelsToTest[i];
-
+    for (const model of this.config.models) {
       try {
-        console.log(`Testing Gemini API key with model: ${modelName} (${i + 1}/${modelsToTest.length})`);
-
-        const model = this.client.models.get(modelName);
-        const result = await model.generateContent({
-          contents: [{ parts: [{ text: 'Say "API key is working" in exactly those words.' }] }]
+        const result = await this.client.models.generateContent({
+          model,
+          contents: [{ parts: [{ text: testPrompt }] }],
         });
-        const text = result.text.trim();
 
-        const isWorking = text.includes('API key is working');
-
-        if (isWorking) {
-          console.log(`✅ Gemini API key validated successfully with ${modelName}`);
+        if (result.text.trim() === 'API_KEY_VALID') {
           return true;
-        } else {
-          console.warn(`⚠️  ${modelName} responded but with unexpected text: "${text}"`);
         }
-
-      } catch (modelError) {
-        console.warn(`❌ ${modelName} test failed: ${modelError.message}`);
-
-        if (i === modelsToTest.length - 1) {
-          throw modelError;
+      } catch (error) {
+        if (model === this.config.models[this.config.models.length - 1]) {
+          throw new Error(`API key test failed: ${error.message}`);
         }
-
-        continue;
       }
     }
 
     return false;
   }
-
 }
 
 export default GeminiProvider;

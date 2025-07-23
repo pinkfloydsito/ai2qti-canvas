@@ -1,7 +1,6 @@
 <script>
   import { aiGenerationStore, aiGenerationActions } from "../stores/llm.js";
   import { llmStore } from "../stores/llm.js";
-  import { assessmentActions } from "../stores/assessment.js";
   import { createEventDispatcher } from "svelte";
   import { t } from "../stores/localization.js";
 
@@ -35,36 +34,39 @@
   // File upload functionality
   async function handleFileUpload(event) {
     const files = Array.from(event.target.files);
-    
+
     for (const file of files) {
-      const ext = file.name.toLowerCase().split('.').pop();
-      
-      if (!['pdf', 'tex', 'txt'].includes(ext)) {
+      const ext = file.name.toLowerCase().split(".").pop();
+
+      if (!["pdf", "tex", "txt"].includes(ext)) {
         alert(`Unsupported file type: .${ext}. Supported: .pdf, .tex, .txt`);
         continue;
       }
-      
+
       // Create temporary file path for processing
       const tempPath = await window.electronAPI.saveTemporaryFile(file);
-      
-      attachedFiles = [...attachedFiles, {
-        name: file.name,
-        path: tempPath,
-        type: ext,
-        size: file.size
-      }];
+
+      attachedFiles = [
+        ...attachedFiles,
+        {
+          name: file.name,
+          path: tempPath,
+          type: ext,
+          size: file.size,
+        },
+      ];
     }
-    
+
     // Clear file input
     if (fileInput) {
-      fileInput.value = '';
+      fileInput.value = "";
     }
   }
 
   function triggerFileUpload() {
     fileInput?.click();
   }
-  
+
   function removeFile(index) {
     attachedFiles = attachedFiles.filter((_, i) => i !== index);
   }
@@ -104,21 +106,19 @@
   }
 
   async function generateQuestions() {
-    console.log("🤖 AIGeneration: Generate button clicked");
     console.log("🔧 AIGeneration: LLM configured?", llmConfig.isConfigured);
     console.log(
       "📝 AIGeneration: Context text:",
       aiParams.contextText?.substring(0, 100) + "...",
     );
-    console.log("📄 AIGeneration: PDF file:", aiParams.pdfFile?.name);
-    console.log("🎯 AIGeneration: Question types:", aiParams.questionTypes);
+    console.log("AIGeneration: Question types:", aiParams.questionTypes);
 
     if (!llmConfig.isConfigured) {
       alert("Please configure your LLM provider first.");
       return;
     }
 
-    if (!aiParams.contextText && !aiParams.pdfFile && attachedFiles.length === 0) {
+    if (!aiParams.contextText && attachedFiles.length === 0) {
       alert($t("messages.errors.noContext"));
       return;
     }
@@ -128,7 +128,7 @@
       return;
     }
 
-    console.log("🚀 AIGeneration: Dispatching generateQuestions event");
+    console.log("AIGeneration: Dispatching generateQuestions event");
     dispatch("generateQuestions", {
       contextText: aiParams.contextText,
       pdfFile: aiParams.pdfFile,
@@ -171,13 +171,16 @@
             <button class="btn-clear-file" on:click={clearPdf}>×</button>
           </span>
         {/if}
-        
+
         {#if attachedFiles.length > 0}
           <div class="attached-files">
             {#each attachedFiles as file, index}
               <span class="attached-file">
                 📎 {file.name} ({(file.size / 1024).toFixed(1)}KB)
-                <button class="btn-clear-file" on:click={() => removeFile(index)}>×</button>
+                <button
+                  class="btn-clear-file"
+                  on:click={() => removeFile(index)}>×</button
+                >
               </span>
             {/each}
           </div>
@@ -428,4 +431,3 @@
     }
   }
 </style>
-

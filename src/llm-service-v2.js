@@ -100,7 +100,8 @@ class LLMService {
       questionCount,
       difficulty,
       questionTypes,
-      includeMath
+      includeMath,
+      withAttachments: attachments.length > 0
     });
 
     // Prepare options with attachments for provider
@@ -207,49 +208,90 @@ class LLMService {
   }
 
   /**
-   * Build the prompt for question generation
+   * Builds the prompt for question generation with support for attachments
    * @param {string} context - Content context
    * @param {Object} options - Generation options
+   * @param {Array} [attachments=[]] - Optional file attachments
    * @returns {string} Formatted prompt
    */
   buildPrompt(context, options) {
-    const { questionCount, difficulty, questionTypes, includeMath } = options;
+    const {
+      questionCount = 10,
+      difficulty = 'medium',
+      questionTypes = ['multiple_choice', 'short_answer'],
+      includeMath = false,
+      withAttachments = false,
+    } = options;
 
-    const mathInstruction = includeMath
-      ? "Use LaTeX notation for mathematical expressions. IMPORTANT: Use single backslashes for LaTeX commands in JSON (e.g., $x^2 + 3x - 5 = 0$ for inline math, $$\\\\\\\\int_0^1 x^2 dx$$ for display math, $90^\\circ$ for degrees)."
-      : "Avoid complex mathematical notation.";
+    // Core prompt components
+    const baseInstruction = withAttachments
+      ? 'consider the number of questions given in the file starting by the tag \\begin{ejerc}, copy all the questions from the attached files, using all its options. Inlude latex expressions of course'
+      : `Generate ${questionCount} questions from the text content`;
 
-    const questionTypesList = questionTypes.map(type => {
-      switch (type) {
-        case 'multiple_choice': return 'multiple choice (4 options)';
-        case 'true_false': return 'true/false';
-        case 'short_answer': return 'short answer';
-        case 'essay': return 'essay';
-        default: return type;
-      }
-    }).join(', ');
+    const questionTypeInstruction = withAttachments ? this.buildQuestionTypeInstruction(questionTypes) : `questions of types: multiple_choice,
+      true_false,
+      short_answer,
+      essay
+`;
+    const mathInstruction = withAttachments ? this.buildMathInstruction(includeMath) : '\n';
+    const formatInstruction = this.buildFormatInstruction();
 
     return `
-Based on the following content, generate ${questionCount} high-quality ${difficulty} level questions.
+${baseInstruction} at ${difficulty} difficulty level.
 
-Content:
+${withAttachments ? 'Attachment content:' : 'Text content:'}
 ${context}
 
 Instructions:
-- Create questions of these types: ${questionTypesList}
-- Difficulty level: ${difficulty}
-- ${mathInstruction}
-- For multiple choice questions, provide exactly 4 options with only one correct answer
-- For true/false questions, provide the correct answer (true or false)
-- For short answer questions, provide a sample correct answer
-- For essay questions, provide grading criteria
+1. ${questionTypeInstruction}
+2. Difficulty level: ${withAttachments ? difficulty : 'given in the attachment questions'}
+3. ${mathInstruction}
+4. ${formatInstruction}
 
-Return the response as a valid JSON object with this exact structure:
+${this.getJsonSchemaExample()}
+`;
+  }
+
+  // Helper methods decomposed for single responsibility
+  buildQuestionTypeInstruction(questionTypes) {
+    const typeMap = {
+      multiple_choice: 'multiple choice (4 options)',
+      true_false: 'true/false',
+      short_answer: 'short answer',
+      essay: 'essay'
+    };
+
+    const formattedTypes = questionTypes.map(type =>
+      typeMap[type] || type
+    ).join(', ');
+
+    return `Create questions of these types: ${formattedTypes}. ` +
+      'For multiple choice: provide exactly 4 options with one correct answer. ' +
+      'For true/false: provide correct boolean answer. ' +
+      'For short answer: provide sample correct answer. ' +
+      'For essay: provide grading criteria.';
+  }
+
+  buildMathInstruction(includeMath) {
+    return includeMath
+      ? 'Use LaTeX notation for math: '
+      + 'Single backslashes for JSON-compatible LaTeX (e.g., "$\\int_0^1 x^2 dx$" for inline, '
+      + '"$$\\\\frac{1}{2}$$" for display math, "$90^\\circ$" for degrees).'
+      : 'Avoid complex mathematical notation.';
+  }
+
+  buildFormatInstruction() {
+    return 'Return ONLY valid JSON with no additional text. ' +
+      'Ensure proper escaping and UTF-8 compatibility.';
+  }
+
+  getJsonSchemaExample() {
+    return `JSON response structure example (ALWAYS follow exactly):
 {
   "questions": [
     {
       "type": "multiple_choice",
-      "text": "Question text here",
+      "text": "Question text",
       "points": 2,
       "choices": [
         {"id": 0, "text": "Option A"},
@@ -258,37 +300,17 @@ Return the response as a valid JSON object with this exact structure:
         {"id": 3, "text": "Option D"}
       ],
       "correctAnswer": 1,
-      "explanation": "Why this answer is correct"
-    },
-    {
-      "type": "true_false",
-      "text": "True/false question text",
-      "points": 1,
-      "correctAnswer": "true",
       "explanation": "Explanation"
     },
     {
       "type": "short_answer",
-      "text": "Short answer question text",
+      "text": "Question text",
       "points": 3,
-      "sampleAnswer": "Sample correct answer",
+      "sampleAnswer": "Correct answer",
       "explanation": "Explanation"
-    },
-    {
-      "type": "essay",
-      "text": "Essay question text",
-      "points": 10,
-      "gradingRubric": "Grading criteria",
-      "explanation": "What students should address"
     }
   ]
-}
-
-Important: 
-- Return ONLY the JSON object, no additional text or formatting
-- Use single backslashes (\\) for LaTeX commands in JSON strings
-- Ensure all JSON is properly escaped and valid
-        `;
+}`;
   }
 
   /**
@@ -324,8 +346,8 @@ Important:
 
         // Type-specific validation and processing
         if (question.type === 'multiple_choice') {
-          if (!question.choices || !Array.isArray(question.choices) || question.choices.length !== 4) {
-            log.warn(`Skipping question ${index + 1}: Multiple choice must have exactly 4 choices. Got:`, question.choices);
+          if (!question.choices || !Array.isArray(question.choices)) {
+            log.warn(`Skipping question ${index + 1}: Got:`, question.choices);
             return;
           }
           processedQuestion.choices = question.choices.map((choice, i) => ({

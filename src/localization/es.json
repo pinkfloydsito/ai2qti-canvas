@@ -9,8 +9,8 @@
   },
   "aiGeneration": {
     "title": "Generación de Preguntas con IA",
-    "uploadPdf": "Subir PDF o Ingresar Texto:",
-    "chooseFile": "Elegir Archivo PDF",
+    "uploadPdf": "Subir PDF/tex file o Ingresar Texto:",
+    "chooseFile": "Elegir Archivo",
     "contextText": "O Ingresa Contexto de Texto:",
     "contextPlaceholder": "Ingresa el contenido/contexto para la generación de preguntas... (Si falla la carga del PDF, copia y pega tu contenido aquí)",
     "tip": "💡 Consejo: Si la extracción del PDF no funciona, puedes copiar el texto de tu PDF y pegarlo aquí manualmente.",
