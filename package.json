@@ -48,6 +48,7 @@
     "@google/genai": "^1.10.0",
     "@google/generative-ai": "^0.2.0",
     "electron-log": "^5.4.1",
+    "jsonrepair": "^3.13.0",
     "katex": "^0.16.0",
     "marked": "^12.0.0",
     "node-fetch": "^2.7.0",

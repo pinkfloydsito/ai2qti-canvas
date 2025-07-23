@@ -1,4 +1,5 @@
 import log from 'electron-log/main.js';
+import { jsonrepair } from 'jsonrepair'
 
 /**
  * Unified JSON extraction utility for all LLM providers
@@ -43,14 +44,14 @@ class JSONExtractor {
     try {
       const parsed = JSON.parse(cleaned);
       log.info(`[${providerName}] JSON parsed successfully on first attempt`);
-      
+
       // Even if JSON is valid, we still need to apply LaTeX fixes for double backslashes
       const latexFixed = this.fixLatexEscapes(cleaned);
       if (latexFixed !== cleaned) {
         log.info(`[${providerName}] Applied LaTeX fixes to valid JSON`);
         return latexFixed;
       }
-      
+
       return cleaned;
     } catch (error) {
       log.warn(`[${providerName}] Initial JSON parse failed: ${error.message}`);
@@ -82,6 +83,8 @@ class JSONExtractor {
     log.info(`[${providerName}] Attempting to repair JSON...`);
 
     // Step 1: Fix LaTeX-specific issues FIRST (before other repairs)
+
+    repaired = jsonrepair(jsonStr)
     repaired = this.fixLatexEscapes(repaired);
 
     // Step 2: Fix common structural issues

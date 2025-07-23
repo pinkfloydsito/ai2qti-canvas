@@ -10,6 +10,15 @@
   let llmConfig = $llmStore;
   let fileInput;
   let attachedFiles = [];
+  let useAttachmentOnly = false;
+
+  // Default prompt for attachment-only mode
+  const attachmentOnlyPrompt = `Generar preguntas basadas únicamente en los archivos adjuntos. 
+      No usar texto adicional, considerar uso de las tildes, sen en vez de sin para las funciones in latex. Considerar que los ejercicios empiezan en \\begin{ejerc}, tomar todos los ejercicios y no solo el primero. 
+      No usar el texto de contexto, solo los archivos adjuntos.`;
+
+  // Reactive variable to track if files are attached
+  $: hasAttachedFiles = attachedFiles.length > 0 || aiParams.fileName;
 
   // Subscribe to store changes
   aiGenerationStore.subscribe((value) => {
@@ -61,6 +70,11 @@
     if (fileInput) {
       fileInput.value = "";
     }
+
+    // If attachment-only mode is enabled, update context text
+    if (useAttachmentOnly && hasAttachedFiles) {
+      aiGenerationActions.updateParams({ contextText: attachmentOnlyPrompt });
+    }
   }
 
   function triggerFileUpload() {
@@ -69,6 +83,11 @@
 
   function removeFile(index) {
     attachedFiles = attachedFiles.filter((_, i) => i !== index);
+
+    // If no files remain and attachment-only mode is enabled, clear context text
+    if (attachedFiles.length === 0 && useAttachmentOnly) {
+      aiGenerationActions.updateParams({ contextText: "" });
+    }
   }
 
   function handleContextTextChange(event) {
@@ -103,6 +122,23 @@
 
   function handleIncludeMathChange(event) {
     aiGenerationActions.updateParams({ includeMath: event.target.checked });
+  }
+
+  function handleAttachmentOnlyChange(event) {
+    useAttachmentOnly = event.target.checked;
+
+    if (useAttachmentOnly && hasAttachedFiles) {
+      // Set the default prompt when enabling attachment-only mode
+      aiGenerationActions.updateParams({ contextText: attachmentOnlyPrompt });
+    } else if (!useAttachmentOnly) {
+      // Clear the prompt when disabling attachment-only mode
+      aiGenerationActions.updateParams({ contextText: "" });
+    }
+  }
+
+  function useAttachmentOnlyPrompt() {
+    aiGenerationActions.updateParams({ contextText: attachmentOnlyPrompt });
+    useAttachmentOnly = true;
   }
 
   async function generateQuestions() {
@@ -144,6 +180,11 @@
     aiGenerationActions.clearPdf();
     if (fileInput) {
       fileInput.value = "";
+    }
+
+    // If attachment-only mode is enabled and no files remain, clear context text
+    if (useAttachmentOnly && !hasAttachedFiles) {
+      aiGenerationActions.updateParams({ contextText: "" });
     }
   }
 </script>
@@ -204,6 +245,16 @@
 
     <div class="form-group">
       <label for="contextText">{$t("aiGeneration.contextText")}</label>
+      <div class="context-controls">
+        <button
+          class="btn btn-outline"
+          type="button"
+          on:click={useAttachmentOnlyPrompt}
+          disabled={!hasAttachedFiles}
+        >
+          📎 Use Attachment Content
+        </button>
+      </div>
       <textarea
         id="contextText"
         placeholder={$t("aiGeneration.contextPlaceholder")}
@@ -222,8 +273,14 @@
         value={aiParams.questionCount}
         min="1"
         max="20"
+        disabled={hasAttachedFiles && useAttachmentOnly}
         on:input={handleQuestionCountChange}
       />
+      {#if hasAttachedFiles && useAttachmentOnly}
+        <small class="disabled-note"
+          >Question count disabled when using attachment-only mode</small
+        >
+      {/if}
     </div>
 
     <div class="form-group">
@@ -231,6 +288,7 @@
       <select
         id="difficultyLevel"
         value={aiParams.difficultyLevel}
+        disabled={hasAttachedFiles && useAttachmentOnly}
         on:change={handleDifficultyChange}
       >
         <option value="easy">{$t("aiGeneration.difficultyLevels.easy")}</option>
@@ -242,23 +300,37 @@
           >{$t("aiGeneration.difficultyLevels.mixed")}</option
         >
       </select>
+      {#if hasAttachedFiles && useAttachmentOnly}
+        <small class="disabled-note"
+          >Difficulty disabled when using attachment-only mode</small
+        >
+      {/if}
     </div>
 
     <div class="form-group">
       <label>{$t("aiGeneration.questionTypes")}</label>
       <div class="checkbox-group">
         {#each questionTypeOptions as option}
-          <label class="checkbox-label">
+          <label
+            class="checkbox-label"
+            class:disabled={hasAttachedFiles && useAttachmentOnly}
+          >
             <input
               type="checkbox"
               value={option.value}
               checked={aiParams.questionTypes.includes(option.value)}
+              disabled={hasAttachedFiles && useAttachmentOnly}
               on:change={handleQuestionTypeChange}
             />
             {option.label}
           </label>
         {/each}
       </div>
+      {#if hasAttachedFiles && useAttachmentOnly}
+        <small class="disabled-note"
+          >Question types disabled when using attachment-only mode</small
+        >
+      {/if}
     </div>
 
     <div class="form-group">
@@ -270,6 +342,21 @@
         />
         {$t("aiGeneration.includeMath")}
       </label>
+    </div>
+
+    <div class="form-group">
+      <label class="checkbox-label">
+        <input
+          type="checkbox"
+          checked={useAttachmentOnly}
+          disabled={!hasAttachedFiles}
+          on:change={handleAttachmentOnlyChange}
+        />
+        Generar preguntas solo con archivos adjuntos
+      </label>
+      {#if !hasAttachedFiles}
+        <small class="disabled-note">Attach files to enable this option</small>
+      {/if}
     </div>
 
     <button
@@ -413,6 +500,51 @@
 
   .generate-btn:disabled {
     background: #6c757d;
+    cursor: not-allowed;
+  }
+
+  .context-controls {
+    margin-bottom: 10px;
+  }
+
+  .btn-outline {
+    background: transparent;
+    border: 1px solid #17a2b8;
+    color: #17a2b8;
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-outline:hover:not(:disabled) {
+    background: #17a2b8;
+    color: white;
+  }
+
+  .btn-outline:disabled {
+    border-color: #6c757d;
+    color: #6c757d;
+    cursor: not-allowed;
+  }
+
+  .disabled-note {
+    color: #6c757d;
+    font-style: italic;
+    margin-top: 5px;
+    display: block;
+  }
+
+  .checkbox-label.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  input:disabled,
+  select:disabled {
+    background-color: #e9ecef;
+    opacity: 0.6;
     cursor: not-allowed;
   }
 
