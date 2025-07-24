@@ -234,12 +234,12 @@ class LLMService {
       ? 'consider the number of questions given in the file starting by the tag \\begin{ejerc}, copy all the questions from the attached files, using all its options. Inlude latex expressions of course'
       : `Generate ${questionCount} questions from the text content`;
 
-    const questionTypeInstruction = withAttachments ? this.buildQuestionTypeInstruction(questionTypes) : `questions of types: multiple_choice,
+    const questionTypeInstruction = !withAttachments ? this.buildQuestionTypeInstruction(questionTypes) : `questions of types depending on the document: multiple_choice,
       true_false,
       short_answer,
       essay
 `;
-    const mathInstruction = withAttachments ? this.buildMathInstruction(includeMath) : '\n';
+    const mathInstruction = this.buildMathInstruction(includeMath)
     const formatInstruction = this.buildFormatInstruction();
 
     return `
@@ -261,7 +261,7 @@ ${this.getJsonSchemaExample()}
   // Helper methods decomposed for single responsibility
   buildQuestionTypeInstruction(questionTypes) {
     const typeMap = {
-      multiple_choice: 'multiple choice (4 options)',
+      multiple_choice: 'multiple choice',
       true_false: 'true/false',
       short_answer: 'short answer',
       essay: 'essay'
@@ -272,7 +272,7 @@ ${this.getJsonSchemaExample()}
     ).join(', ');
 
     return `Create questions of these types: ${formattedTypes}. ` +
-      'For multiple choice: provide exactly 4 options with one correct answer. ' +
+      'For multiple choice: provide options with one correct answer. ' +
       'For true/false: provide correct boolean answer. ' +
       'For short answer: provide sample correct answer. ' +
       'For essay: provide grading criteria.';
@@ -282,6 +282,7 @@ ${this.getJsonSchemaExample()}
     return includeMath
       ? 'Use LaTeX notation for math: '
       + 'Single backslashes for JSON-compatible LaTeX (e.g., "$\\int_0^1 x^2 dx$" for inline, '
+      + 'Use sen instead of sin for the sine function in latex, '
       + '"$$\\\\frac{1}{2}$$" for display math, "$90^\\circ$" for degrees).'
       : 'Avoid complex mathematical notation.';
   }
