@@ -1,6 +1,7 @@
 <script>
   import { aiGenerationStore, aiGenerationActions } from "../stores/llm.js";
   import { llmStore } from "../stores/llm.js";
+  import LatexParser from "../services/latex-parser.js";
   import { createEventDispatcher } from "svelte";
   import { t } from "../stores/localization.js";
 
@@ -11,6 +12,7 @@
   let fileInput;
   let attachedFiles = [];
   let useAttachmentOnly = false;
+  let useAI = true;
 
   // Default prompt for attachment-only mode
   const attachmentOnlyPrompt = `Generar preguntas basadas únicamente en los archivos adjuntos. 
@@ -19,6 +21,13 @@
 
   // Reactive variable to track if files are attached
   $: hasAttachedFiles = attachedFiles.length > 0 || aiParams.fileName;
+
+  // Reactive variable to determine if AI is needed
+  $: hasLatexFiles = attachedFiles.some((file) => file.type === "tex");
+  $: needsAI =
+    useAI ||
+    (!hasLatexFiles &&
+      (aiParams.contextText || attachedFiles.some((f) => f.type !== "tex")));
 
   // Subscribe to store changes
   aiGenerationStore.subscribe((value) => {
@@ -124,6 +133,10 @@
     aiGenerationActions.updateParams({ includeMath: event.target.checked });
   }
 
+  function handleUseAIChange(event) {
+    useAI = event.target.checked;
+  }
+
   function handleAttachmentOnlyChange(event) {
     useAttachmentOnly = event.target.checked;
 
@@ -149,8 +162,11 @@
     );
     console.log("AIGeneration: Question types:", aiParams.questionTypes);
 
-    if (!llmConfig.isConfigured) {
-      alert("Please configure your LLM provider first.");
+    // Only require LLM configuration if we need AI processing
+    if (needsAI && !llmConfig.isConfigured) {
+      alert(
+        "Please configure your LLM provider first, or disable 'Use AI' to parse LaTeX files without AI.",
+      );
       return;
     }
 
@@ -159,13 +175,14 @@
       return;
     }
 
-    if (aiParams.questionTypes.length === 0) {
+    // Only require question types for AI generation, LaTeX parsing will determine types automatically
+    if (needsAI && aiParams.questionTypes.length === 0) {
       alert($t("messages.errors.noQuestionTypes"));
       return;
     }
 
-    console.log("AIGeneration: Dispatching generateQuestions event");
-    dispatch("generateQuestions", {
+    console.log("[AIGeneration.svelte]: Dispatching generateQuestions event");
+    return dispatch("generateQuestions", {
       contextText: aiParams.contextText,
       pdfFile: aiParams.pdfFile,
       attachments: attachedFiles,
@@ -173,6 +190,7 @@
       difficultyLevel: aiParams.difficultyLevel,
       questionTypes: aiParams.questionTypes,
       includeMath: aiParams.includeMath,
+      useAI: useAI,
     });
   }
 
@@ -346,6 +364,23 @@
 
     <div class="form-group">
       <label class="checkbox-label">
+        <input type="checkbox" checked={useAI} on:change={handleUseAIChange} />
+        Use AI to generate answers for LaTeX questions
+      </label>
+      <small>
+        {#if hasLatexFiles}
+          When enabled, AI will generate complete answers for questions parsed
+          from LaTeX files. When disabled, LaTeX files will be parsed but
+          questions will have basic structure.
+        {:else}
+          When enabled, AI will generate complete answers for questions parsed
+          from LaTeX files.
+        {/if}
+      </small>
+    </div>
+
+    <div class="form-group">
+      <label class="checkbox-label">
         <input
           type="checkbox"
           checked={useAttachmentOnly}
@@ -362,10 +397,12 @@
     <button
       class="btn btn-primary generate-btn"
       on:click={generateQuestions}
-      disabled={llmConfig.isGenerating || !llmConfig.isConfigured}
+      disabled={llmConfig.isGenerating || (needsAI && !llmConfig.isConfigured)}
     >
       {#if llmConfig.isGenerating}
         🤖 {$t("aiGeneration.generating")}
+      {:else if hasLatexFiles && !needsAI}
+        📝 Parse LaTeX Questions
       {:else}
         {$t("aiGeneration.generateBtn")}
       {/if}

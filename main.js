@@ -5,12 +5,14 @@ import { fileURLToPath } from 'url';
 import log from 'electron-log/main.js';
 
 import LLMService from './src/llm-service-v2.js';
+import LaTeXParser from './src/services/latex-parser.js';
 
 // Configure logging
 log.transports.file.level = 'info';
 log.transports.console.level = 'debug';
 
 const llmService = new LLMService();
+const latexParser = new LaTeXParser();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -101,11 +103,11 @@ function createWindow() {
     log.info('Loading index.html from:', indexPath);
     log.info('File exists:', fs.existsSync(indexPath));
     log.info('__dirname:', __dirname);
-    
+
     mainWindow.loadFile(indexPath).catch(error => {
       log.error('Failed to load index.html:', error);
     });
-    
+
     // Add debugging for production
     mainWindow.webContents.openDevTools();
   }
@@ -373,31 +375,31 @@ ipcMain.handle('load-assessment', safeHandler(async (event) => {
 // File upload handlers for AI attachments
 ipcMain.handle('save-temporary-file', safeHandler(async (_, fileBuffer, fileName) => {
   const tempDir = path.join(app.getPath('temp'), 'qti-generator');
-  
+
   // Ensure temp directory exists
   if (!fs.existsSync(tempDir)) {
     fs.mkdirSync(tempDir, { recursive: true });
   }
-  
+
   // Generate unique filename to avoid conflicts
   const timestamp = Date.now();
   const tempFileName = `${timestamp}_${fileName}`;
   const tempPath = path.join(tempDir, tempFileName);
-  
+
   // Write file buffer to temp location
   fs.writeFileSync(tempPath, Buffer.from(fileBuffer));
-  
+
   log.info('Temporary file saved:', tempPath);
   return { success: true, tempPath };
 }));
 
 ipcMain.handle('cleanup-temporary-files', safeHandler(async (_) => {
   const tempDir = path.join(app.getPath('temp'), 'qti-generator');
-  
+
   if (fs.existsSync(tempDir)) {
     const files = fs.readdirSync(tempDir);
     let deletedCount = 0;
-    
+
     for (const file of files) {
       try {
         fs.unlinkSync(path.join(tempDir, file));
@@ -406,11 +408,11 @@ ipcMain.handle('cleanup-temporary-files', safeHandler(async (_) => {
         log.warn('Failed to delete temp file:', file, error.message);
       }
     }
-    
+
     log.info(`Cleaned up ${deletedCount} temporary files`);
     return { success: true, deletedCount };
   }
-  
+
   return { success: true, deletedCount: 0 };
 }));
 
@@ -442,6 +444,65 @@ ipcMain.handle('generate-questions', safeHandler(async (_, context, options) => 
 ipcMain.handle('get-cached-api-key', safeHandler(async (_, provider) => {
   const apiKey = llmService.getCachedApiKey(provider);
   return { success: true, apiKey };
+}));
+
+// File reading handler for LaTeX files
+ipcMain.handle('read-file', safeHandler(async (_, filePath) => {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`File not found: ${filePath}`);
+  }
+
+  const content = fs.readFileSync(filePath, 'utf8');
+  return content;
+}));
+
+// Generate answers for individual questions
+ipcMain.handle('generate-question-answers', safeHandler(async (_, questionText, options) => {
+  const { questionType, difficulty, includeMath } = options;
+
+  // Build a specific prompt for answer generation
+  const answerPrompt = `Generate appropriate answers for this ${questionType} question:
+
+Question: ${questionText}
+
+Requirements:
+- Question type: ${questionType}
+- Difficulty: ${difficulty}
+- Include math: ${includeMath}
+- Provide a complete question object with proper structure for ${questionType}
+- For multiple choice: provide 4 options with one correct answer
+- For true/false: provide true/false options with correct answer
+- For short answer: provide the correct answer
+- For essay: provide a sample answer and rubric
+
+Return ONLY a JSON object with the question structure.`;
+
+  const result = await llmService.generateQuestions(answerPrompt, {
+    questionCount: 1,
+    difficulty,
+    questionTypes: [questionType],
+    includeMath
+  });
+
+  if (result && result.length > 0) {
+    return { success: true, question: result[0] };
+  } else {
+    throw new Error('Failed to generate question answers');
+  }
+}));
+
+ipcMain.handle('parse-latex-questions', safeHandler(async (_, filePath) => {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`LaTeX file not found: ${filePath}`);
+  }
+
+  const latexContent = fs.readFileSync(filePath, 'utf8');
+
+  // Parse LaTeX content without AI (useAI = false)
+  const questions = await latexParser.parseLatexFile(latexContent, false);
+
+  log.info(`📚 Parsed ${questions.length} questions from LaTeX file without AI`);
+  return { success: true, questions };
 }));
 
 // App lifecycle management

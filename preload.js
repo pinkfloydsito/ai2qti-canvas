@@ -11,7 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // File operations - PDF disabled to prevent DOMMatrix issues
   // selectPDFFile: () => ipcRenderer.invoke('select-pdf-file'),
   // extractText: (arrayBuffer) => ipcRenderer.invoke('extract-pdf-text', arrayBuffer),
-  
+
   // File upload operations for AI attachments
   saveTemporaryFile: async (file) => {
     const arrayBuffer = await file.arrayBuffer();
@@ -24,7 +24,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   configureLLM: (provider, apiKey) => ipcRenderer.invoke('configure-llm', provider, apiKey),
   testApiKey: (provider, apiKey) => ipcRenderer.invoke('test-api-key', provider, apiKey),
   generateQuestions: (context, options) => ipcRenderer.invoke('generate-questions', context, options),
+  generateQuestionAnswers: (questionText, options) => ipcRenderer.invoke('generate-question-answers', questionText, options),
   getCachedApiKey: (provider) => ipcRenderer.invoke('get-cached-api-key', provider),
+
+  // File operations for LaTeX parsing
+  readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
+  parseLatexQuestions: (filePath) => ipcRenderer.invoke('parse-latex-questions', filePath),
 
   // Menu events
   onNewAssessment: (callback) => ipcRenderer.on('new-assessment', callback),

@@ -5,7 +5,7 @@ import { llmActions, aiGenerationActions } from '../stores/llm.js';
 // Import proper non-browser services
 import QTIExporter from '../qti-exporter.js';
 import LaTeXRenderer from '../latex-renderer.js';
-
+import LaTeXParser from './latex-parser.js';
 
 
 class QTIGeneratorService {
@@ -13,6 +13,7 @@ class QTIGeneratorService {
     // LLM service will be accessed via IPC - no direct instantiation needed
     this.qtiExporter = new QTIExporter();
     this.latexRenderer = new LaTeXRenderer();
+    this.latexParser = new LaTeXParser();
     this.currentProvider = 'gemini';
     this.initialized = true;
   }
@@ -106,7 +107,8 @@ class QTIGeneratorService {
         difficultyLevel,
         questionTypes,
         includeMath,
-        attachments = []
+        attachments = [],
+        useAI = true
       } = params;
 
       console.log('🔧 Generating questions via IPC');
@@ -114,22 +116,99 @@ class QTIGeneratorService {
         console.log('📎 Including attachments:', attachments.map(f => f.name).join(', '));
       }
 
-      // Use the LLM service to generate questions via IPC
-      const result = await window.electronAPI.generateQuestions(contextText, {
-        questionCount,
-        difficulty: difficultyLevel,
-        questionTypes,
-        includeMath,
-        attachments
-      });
+      let generatedQuestions = [];
 
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to generate questions');
+      // Check if we have LaTeX files to parse
+      const latexFiles = attachments.filter(file => file.type === 'tex');
+
+      if (latexFiles.length > 0) {
+        console.log('📝 Processing LaTeX files:', latexFiles.map(f => f.name).join(', '));
+
+        // Parse LaTeX files first
+        for (const latexFile of latexFiles) {
+          try {
+            let parsedQuestions;
+
+            if (useAI) {
+              console.log("using AI for LaTeX parsing");
+              // Use AI-enhanced parsing (read file and parse in renderer)
+              const fileContent = await window.electronAPI.readFile(latexFile.path);
+              parsedQuestions = await this.latexParser.parseLatexFile(fileContent, useAI);
+              console.log(`📚 Parsed ${parsedQuestions.length} questions from ${latexFile.name} with AI parsing`);
+
+              if (parsedQuestions.some(q => q.needsAIGeneration)) {
+                // Generate AI answers for questions that need them
+                console.log('🤖 Generating AI answers for LaTeX questions...');
+                const questionsNeedingAI = parsedQuestions.filter(q => q.needsAIGeneration);
+
+                for (const question of questionsNeedingAI) {
+                  try {
+                    const aiResult = await window.electronAPI.generateQuestionAnswers(question.text, {
+                      questionType: question.type,
+                      difficulty: difficultyLevel,
+                      includeMath
+                    });
+
+                    if (aiResult.success && aiResult.question) {
+                      // Merge AI-generated answers with parsed question
+                      Object.assign(question, aiResult.question, {
+                        id: question.id, // Keep original ID
+                        text: question.text, // Keep original text
+                        source: 'latex_parser_ai'
+                      });
+                      delete question.needsAIGeneration;
+                    }
+                  } catch (aiError) {
+                    console.warn(`⚠️ AI generation failed for question ${question.id}:`, aiError.message);
+                    // Keep the question without AI-generated answers
+                    delete question.needsAIGeneration;
+                  }
+                }
+              }
+            } else {
+              console.log(`📝 Parsing LaTeX file ${latexFile.name} without AI...`);
+              const result = await window.electronAPI.parseLatexQuestions(latexFile.path);
+
+              if (!result.success) {
+                throw new Error(result.error || 'Failed to parse LaTeX file');
+              }
+
+              parsedQuestions = result.questions;
+              console.log(`📚 Parsed ${parsedQuestions.length} questions from ${latexFile.name} without AI`);
+            }
+
+            generatedQuestions.push(...parsedQuestions);
+          } catch (parseError) {
+            console.error(`❌ Failed to parse LaTeX file ${latexFile.name}:`, parseError.message);
+            // Continue with other files
+          }
+        }
       }
 
-      const generatedQuestions = result.questions;
+      // If we have non-LaTeX files or contextText, use the regular LLM generation
+      const nonLatexAttachments = attachments.filter(file => file.type !== 'tex');
+      if (contextText || nonLatexAttachments.length > 0) {
+        const result = await window.electronAPI.generateQuestions(contextText, {
+          questionCount,
+          difficulty: difficultyLevel,
+          questionTypes,
+          includeMath,
+          attachments: nonLatexAttachments
+        });
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to generate questions');
+        }
+
+        generatedQuestions.push(...result.questions);
+      }
 
       console.log('✅ Generated questions:', generatedQuestions);
+
+      // Check if we actually generated any questions
+      if (generatedQuestions.length === 0) {
+        throw new Error('No questions were generated. Please check your LaTeX file format or try with AI enabled.');
+      }
 
       // Add generated questions to assessment
       generatedQuestions.forEach(question => {

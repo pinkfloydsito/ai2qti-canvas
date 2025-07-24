@@ -11,11 +11,13 @@
 
   // Initialize services (dynamically imported to avoid conflicts)
   let qtiGenerator;
-  
+
   // Initialize QTI generator on component mount
-  import { onMount } from 'svelte';
+  import { onMount } from "svelte";
   onMount(async () => {
-    const { qtiGenerator: generator } = await import('./services/qti-generator.js');
+    const { qtiGenerator: generator } = await import(
+      "./services/qti-generator.js"
+    );
     qtiGenerator = generator;
   });
 
