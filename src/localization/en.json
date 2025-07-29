@@ -9,8 +9,8 @@
   },
   "aiGeneration": {
     "title": "AI Question Generation",
-    "uploadPdf": "Enter Text:",
-    "chooseFile": "Choose File",
+    "uploadPdf": "Upload Files:",
+    "chooseFile": "Attach Files (.pdf, .tex, .txt)",
     "contextText": "Text Context:",
     "contextPlaceholder": "Enter the content/context for question generation...",
     "tip": "💡 Tip: Paste your content here for question generation.",

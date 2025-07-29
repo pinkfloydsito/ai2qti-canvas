@@ -1,4 +1,5 @@
 import log from 'electron-log/main.js';
+import { jsonrepair } from 'jsonrepair'
 
 /**
  * Unified JSON extraction utility for all LLM providers
@@ -43,14 +44,14 @@ class JSONExtractor {
     try {
       const parsed = JSON.parse(cleaned);
       log.info(`[${providerName}] JSON parsed successfully on first attempt`);
-      
+
       // Even if JSON is valid, we still need to apply LaTeX fixes for double backslashes
       const latexFixed = this.fixLatexEscapes(cleaned);
       if (latexFixed !== cleaned) {
         log.info(`[${providerName}] Applied LaTeX fixes to valid JSON`);
         return latexFixed;
       }
-      
+
       return cleaned;
     } catch (error) {
       log.warn(`[${providerName}] Initial JSON parse failed: ${error.message}`);
@@ -76,75 +77,73 @@ class JSONExtractor {
    * @param {string} providerName - Provider name for logging
    * @returns {string} - Repaired JSON string
    */
-  static repairJSON(jsonStr, providerName) {
-    let repaired = jsonStr;
+  static repairJSON(jsonStr, providerName = 'unknown') {
+    const original = String(jsonStr ?? '');
 
     log.info(`[${providerName}] Attempting to repair JSON...`);
 
-    // Step 1: Fix LaTeX-specific issues FIRST (before other repairs)
-    repaired = this.fixLatexEscapes(repaired);
+    // Handle empty or whitespace-only strings
+    if (!original.trim()) {
+      return '{}';
+    }
 
-    // Step 2: Fix common structural issues
-    repaired = repaired
-      .replace(/,\s*}/g, '}')           // Remove trailing commas in objects
-      .replace(/,\s*]/g, ']')           // Remove trailing commas in arrays
-      .replace(/\n/g, '\\n')            // Escape newlines
-      .replace(/\t/g, '\\t');           // Escape tabs
-
-    // Step 3: Fix backslashes (but preserve LaTeX)
-    repaired = this.fixBackslashes(repaired);
-
-    return repaired.trim();
+    return pipe(
+      original,
+      jsonrepair,                    // structural repair
+      s => s.trim()
+    );
   }
 
-  /**
-   * Fix backslashes while preserving LaTeX syntax
-   * @param {string} text - Text to fix
-   * @returns {string} - Text with fixed backslashes
-   */
-  static fixBackslashes(text) {
-    // Split by string boundaries to avoid touching LaTeX inside strings
-    return text.replace(/"([^"\\]*(\\.[^"\\]*)*)"/g, (match, content) => {
-      // Inside JSON strings, fix unescaped backslashes
-      // But preserve LaTeX commands (single backslash followed by letter)
-      const fixed = content
-        // .replace(/\\(?![\\"/bfnrt]|u[0-9a-fA-F]{4}|[a-zA-Z])/g, '\\\\') // Fix unescaped backslashes
-        .replace(/\\+/g, '\\')
-        .replace(/([^\\])"/g, '$1\\"');
-      return `"${fixed}"`;
-    });
+  static stripLeadingJunk(s) {
+    const match = s.match(/[{[]/);
+    return match ? s.slice(match.index) : s;
   }
 
-  /**
-   * Fix LaTeX escape sequences in JSON strings
-   * @param {string} text - Text with potential LaTeX issues
-   * @returns {string} - Text with fixed LaTeX escapes
-   */
-  static fixLatexEscapes(text) {
-    let fixed = text;
-
-    // Fix LaTeX expressions specifically - handle various backslash patterns
-    // We need to handle different cases:
-    // - \\\\\\\\ in JSON should become \\\\ (which becomes \\ when parsed - double backslash for LaTeX)
-    // - \\\\ in JSON should become \\ (which becomes \ when parsed - single backslash for LaTeX)
-    fixed = fixed.replace(/"([^"]*)"/g, (match, content) => {
-      // Only process if it contains LaTeX-like patterns with multiple backslashes
-      if (content.includes('\\\\') && /\\\\[a-zA-Z]/.test(content)) {
-        // For the case where we have 4 backslashes (\\\\\\\\) -> reduce to 2 (\\\\)
-        // This handles over-escaped LaTeX from some AI responses
-        if (content.includes('\\\\\\\\')) {
-          const cleanContent = content.replace(/\\\\\\\\/g, '\\\\');
-          return `"${cleanContent}"`;
-        }
-        // For normal case with 2 backslashes, \\\\ should remain \\\\ (which becomes \\ when parsed)
-        // This is already valid JSON, so no change needed
-        return match;
-      }
-      return match;
-    });
-
-    return fixed;
+  /** Strip UTF-8 BOM if present */
+  static removeByteOrderMark(s) {
+    return s.replace(/^\uFEFF/, '');
   }
+
+  /** Turn the literal two-char sequence “\n” into a real line-feed etc. */
+  static unescapeLiteralEscapes(s) {
+    return s
+      .replace(/\\n/g, '\n')
+      .replace(/\\t/g, '\t')
+      .replace(/\\r/g, '\r')
+      .replace(/\\"/g, '"')
+      .replace(/\\\\/g, '\\');
+  }
+
+  /** Remove trailing commas before ] or } */
+  static removeTrailingCommas(s) {
+    return s
+      .replace(/,(\s*[\]}])/g, '$1');
+  }
+
+  /** Turn real control chars into safe JSON escapes */
+  static escapeControlChars(s) {
+    return s
+      .replace(/\n/g, '\\n')
+      .replace(/\t/g, '\\t')
+      .replace(/\r/g, '\\r');
+  }
+
+  /** Ensure LaTeX commands are single-escaped (\\cmd, not \\\cmd) */
+  static fixLatexEscapes(s) {
+    return s
+      .replace(/(^|[^\\])(\\\\)+([a-zA-Z]+)/g, '$1\\$3');
+  }
+
+  /** Deduplicate backslashes that are *not* part of LaTeX */
+  static fixBackslashes(s) {
+    // naive: collapse >2 backslashes down to 2, leave LaTeX alone
+    return s
+      .replace(/(\\{3,})(?=[^a-zA-Z]|$)/g, '\\\\');
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* tiny helper – left-to-right compose                                    */
+  /* ---------------------------------------------------------------------- */
 
   /**
    * Validate that extracted JSON has the expected structure for questions
@@ -183,5 +182,7 @@ class JSONExtractor {
     }
   }
 }
+
+const pipe = (x, ...fns) => fns.reduce((v, f) => f(v), x);
 
 export default JSONExtractor;

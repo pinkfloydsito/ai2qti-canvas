@@ -32,4 +32,7 @@ Thumbs.db
 
 # Electron
 *.log
+temp/
 CLAUDE.md
+llm-debug-logs/
+sample.tex

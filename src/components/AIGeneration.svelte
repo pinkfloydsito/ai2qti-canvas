@@ -1,7 +1,6 @@
 <script>
   import { aiGenerationStore, aiGenerationActions } from "../stores/llm.js";
   import { llmStore } from "../stores/llm.js";
-  import { assessmentActions } from "../stores/assessment.js";
   import { createEventDispatcher } from "svelte";
   import { t } from "../stores/localization.js";
 
@@ -10,6 +9,24 @@
   let aiParams = $aiGenerationStore;
   let llmConfig = $llmStore;
   let fileInput;
+  let attachedFiles = [];
+  let useAttachmentOnly = false;
+  let useAI = true;
+
+  // Default prompt for attachment-only mode
+  const attachmentOnlyPrompt = `Generar preguntas basadas únicamente en los archivos adjuntos. 
+      No usar texto adicional, considerar uso de las tildes, sen en vez de sin para las funciones in latex. Considerar que los ejercicios empiezan en \\begin{ejerc}, tomar todos los ejercicios y no solo el primero. 
+      No usar el texto de contexto, solo los archivos adjuntos.`;
+
+  // Reactive variable to track if files are attached
+  $: hasAttachedFiles = attachedFiles.length > 0 || aiParams.fileName;
+
+  // Reactive variable to determine if AI is needed
+  $: hasLatexFiles = attachedFiles.some((file) => file.type === "tex");
+  $: needsAI =
+    useAI ||
+    (!hasLatexFiles &&
+      (aiParams.contextText || attachedFiles.some((f) => f.type !== "tex")));
 
   // Subscribe to store changes
   aiGenerationStore.subscribe((value) => {
@@ -31,19 +48,57 @@
     { value: "essay", label: $t("aiGeneration.typeLabels.essay") },
   ];
 
-  // PDF functionality disabled
-  function handleFileUpload(event) {
-    // const file = event.target.files[0];
-    // if (file && file.type === 'application/pdf') {
-    //   aiGenerationActions.setPdfFile(file, file.name);
-    //   dispatch('pdfUploaded', { file });
-    // }
+  // File upload functionality
+  async function handleFileUpload(event) {
+    const files = Array.from(event.target.files);
 
-    console.error("PDF functionality is disabled in this version.");
+    for (const file of files) {
+      const ext = file.name.toLowerCase().split(".").pop();
+
+      if (!["pdf", "tex", "txt"].includes(ext)) {
+        alert(`Unsupported file type: .${ext}. Supported: .pdf, .tex, .txt`);
+        continue;
+      }
+
+      // Create temporary file path for processing
+      const tempPath = await window.electronAPI.saveTemporaryFile(file);
+
+      attachedFiles = [
+        ...attachedFiles,
+        {
+          name: file.name,
+          path: tempPath,
+          type: ext,
+          size: file.size,
+        },
+      ];
+    }
+
+    // Clear file input
+    if (fileInput) {
+      fileInput.value = "";
+    }
+
+    // If attachment-only mode is enabled, update context text
+    if (useAttachmentOnly && hasAttachedFiles) {
+      aiGenerationActions.updateParams({
+        contextText: attachmentOnlyPrompt,
+        useAttachmentOnly: true,
+      });
+    }
   }
 
   function triggerFileUpload() {
-    console.error("PDF functionality is disabled in this version.");
+    fileInput?.click();
+  }
+
+  function removeFile(index) {
+    attachedFiles = attachedFiles.filter((_, i) => i !== index);
+
+    // If no files remain and attachment-only mode is enabled, clear context text
+    if (attachedFiles.length === 0 && useAttachmentOnly) {
+      aiGenerationActions.updateParams({ contextText: "" });
+    }
   }
 
   function handleContextTextChange(event) {
@@ -80,39 +135,74 @@
     aiGenerationActions.updateParams({ includeMath: event.target.checked });
   }
 
+  function handleUseAIChange(event) {
+    useAI = event.target.checked;
+  }
+
+  function handleAttachmentOnlyChange(event) {
+    useAttachmentOnly = event.target.checked;
+
+    if (useAttachmentOnly && hasAttachedFiles) {
+      // Set the default prompt when enabling attachment-only mode
+      aiGenerationActions.updateParams({
+        contextText: attachmentOnlyPrompt,
+        useAttachmentOnly: true,
+      });
+    } else if (!useAttachmentOnly) {
+      // Clear the prompt when disabling attachment-only mode
+      aiGenerationActions.updateParams({
+        contextText: "",
+        useAttachmentOnly: false,
+      });
+    }
+  }
+
+  function useAttachmentOnlyPrompt() {
+    aiGenerationActions.updateParams({
+      contextText: attachmentOnlyPrompt,
+      useAttachmentOnly: true,
+    });
+    useAttachmentOnly = true;
+  }
+
   async function generateQuestions() {
-    console.log("🤖 AIGeneration: Generate button clicked");
     console.log("🔧 AIGeneration: LLM configured?", llmConfig.isConfigured);
     console.log(
       "📝 AIGeneration: Context text:",
       aiParams.contextText?.substring(0, 100) + "...",
     );
-    console.log("📄 AIGeneration: PDF file:", aiParams.pdfFile?.name);
-    console.log("🎯 AIGeneration: Question types:", aiParams.questionTypes);
+    console.log("AIGeneration: Question types:", aiParams.questionTypes);
 
-    if (!llmConfig.isConfigured) {
-      alert("Please configure your LLM provider first.");
+    // Only require LLM configuration if we need AI processing
+    if (needsAI && !llmConfig.isConfigured) {
+      alert(
+        "Please configure your LLM provider first, or disable 'Use AI' to parse LaTeX files without AI.",
+      );
       return;
     }
 
-    if (!aiParams.contextText && !aiParams.pdfFile) {
+    if (!aiParams.contextText && attachedFiles.length === 0) {
       alert($t("messages.errors.noContext"));
       return;
     }
 
-    if (aiParams.questionTypes.length === 0) {
+    // Only require question types for AI generation, LaTeX parsing will determine types automatically
+    if (needsAI && aiParams.questionTypes.length === 0) {
       alert($t("messages.errors.noQuestionTypes"));
       return;
     }
 
-    console.log("🚀 AIGeneration: Dispatching generateQuestions event");
-    dispatch("generateQuestions", {
+    console.log("[AIGeneration.svelte]: Dispatching generateQuestions event");
+    return dispatch("generateQuestions", {
       contextText: aiParams.contextText,
       pdfFile: aiParams.pdfFile,
+      attachments: attachedFiles,
       questionCount: aiParams.questionCount,
       difficultyLevel: aiParams.difficultyLevel,
       questionTypes: aiParams.questionTypes,
       includeMath: aiParams.includeMath,
+      useAttachmentOnly: aiParams.useAttachmentOnly,
+      useAI: useAI,
     });
   }
 
@@ -120,6 +210,11 @@
     aiGenerationActions.clearPdf();
     if (fileInput) {
       fileInput.value = "";
+    }
+
+    // If attachment-only mode is enabled and no files remain, clear context text
+    if (useAttachmentOnly && !hasAttachedFiles) {
+      aiGenerationActions.updateParams({ contextText: "" });
     }
   }
 </script>
@@ -133,18 +228,33 @@
         <input
           type="file"
           bind:this={fileInput}
-          accept=".pdf"
+          accept=".pdf,.tex,.txt"
+          multiple
           style="display: none;"
           on:change={handleFileUpload}
         />
         <button class="btn btn-secondary" on:click={triggerFileUpload}>
-          {$t("aiGeneration.chooseFile")}
+          📎 {$t("aiGeneration.chooseFile")}
         </button>
         {#if aiParams.fileName}
           <span class="file-name">
             📄 {aiParams.fileName}
             <button class="btn-clear-file" on:click={clearPdf}>×</button>
           </span>
+        {/if}
+
+        {#if attachedFiles.length > 0}
+          <div class="attached-files">
+            {#each attachedFiles as file, index}
+              <span class="attached-file">
+                📎 {file.name} ({(file.size / 1024).toFixed(1)}KB)
+                <button
+                  class="btn-clear-file"
+                  on:click={() => removeFile(index)}>×</button
+                >
+              </span>
+            {/each}
+          </div>
         {/if}
         {#if aiParams.isExtracting}
           <div class="extraction-progress">
@@ -165,6 +275,16 @@
 
     <div class="form-group">
       <label for="contextText">{$t("aiGeneration.contextText")}</label>
+      <div class="context-controls">
+        <button
+          class="btn btn-outline"
+          type="button"
+          on:click={useAttachmentOnlyPrompt}
+          disabled={!hasAttachedFiles}
+        >
+          📎 Use Attachment Content
+        </button>
+      </div>
       <textarea
         id="contextText"
         placeholder={$t("aiGeneration.contextPlaceholder")}
@@ -183,8 +303,14 @@
         value={aiParams.questionCount}
         min="1"
         max="20"
+        disabled={hasAttachedFiles && useAttachmentOnly}
         on:input={handleQuestionCountChange}
       />
+      {#if hasAttachedFiles && useAttachmentOnly}
+        <small class="disabled-note"
+          >Question count disabled when using attachment-only mode</small
+        >
+      {/if}
     </div>
 
     <div class="form-group">
@@ -192,6 +318,7 @@
       <select
         id="difficultyLevel"
         value={aiParams.difficultyLevel}
+        disabled={hasAttachedFiles && useAttachmentOnly}
         on:change={handleDifficultyChange}
       >
         <option value="easy">{$t("aiGeneration.difficultyLevels.easy")}</option>
@@ -203,23 +330,37 @@
           >{$t("aiGeneration.difficultyLevels.mixed")}</option
         >
       </select>
+      {#if hasAttachedFiles && useAttachmentOnly}
+        <small class="disabled-note"
+          >Difficulty disabled when using attachment-only mode</small
+        >
+      {/if}
     </div>
 
     <div class="form-group">
       <label>{$t("aiGeneration.questionTypes")}</label>
       <div class="checkbox-group">
         {#each questionTypeOptions as option}
-          <label class="checkbox-label">
+          <label
+            class="checkbox-label"
+            class:disabled={hasAttachedFiles && useAttachmentOnly}
+          >
             <input
               type="checkbox"
               value={option.value}
               checked={aiParams.questionTypes.includes(option.value)}
+              disabled={hasAttachedFiles && useAttachmentOnly}
               on:change={handleQuestionTypeChange}
             />
             {option.label}
           </label>
         {/each}
       </div>
+      {#if hasAttachedFiles && useAttachmentOnly}
+        <small class="disabled-note"
+          >Question types disabled when using attachment-only mode</small
+        >
+      {/if}
     </div>
 
     <div class="form-group">
@@ -233,13 +374,47 @@
       </label>
     </div>
 
+    <div class="form-group">
+      <label class="checkbox-label">
+        <input type="checkbox" checked={useAI} on:change={handleUseAIChange} />
+        Use AI to generate answers for LaTeX questions
+      </label>
+      <small>
+        {#if hasLatexFiles}
+          When enabled, AI will generate complete answers for questions parsed
+          from LaTeX files. When disabled, LaTeX files will be parsed but
+          questions will have basic structure.
+        {:else}
+          When enabled, AI will generate complete answers for questions parsed
+          from LaTeX files.
+        {/if}
+      </small>
+    </div>
+
+    <div class="form-group">
+      <label class="checkbox-label">
+        <input
+          type="checkbox"
+          checked={useAttachmentOnly}
+          disabled={!hasAttachedFiles}
+          on:change={handleAttachmentOnlyChange}
+        />
+        Generar preguntas solo de archivos adjuntos
+      </label>
+      {#if !hasAttachedFiles}
+        <small class="disabled-note">Attach files to enable this option</small>
+      {/if}
+    </div>
+
     <button
       class="btn btn-primary generate-btn"
       on:click={generateQuestions}
-      disabled={llmConfig.isGenerating || !llmConfig.isConfigured}
+      disabled={llmConfig.isGenerating || (needsAI && !llmConfig.isConfigured)}
     >
       {#if llmConfig.isGenerating}
         🤖 {$t("aiGeneration.generating")}
+      {:else if hasLatexFiles && !needsAI}
+        📝 Parse LaTeX Questions
       {:else}
         {$t("aiGeneration.generateBtn")}
       {/if}
@@ -305,6 +480,24 @@
     background: rgba(0, 0, 0, 0.1);
   }
 
+  .attached-files {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 10px;
+  }
+
+  .attached-file {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #e7f3ff;
+    padding: 5px 10px;
+    border-radius: 4px;
+    color: #004085;
+    font-size: 14px;
+  }
+
   .extraction-progress {
     display: flex;
     align-items: center;
@@ -359,6 +552,51 @@
     cursor: not-allowed;
   }
 
+  .context-controls {
+    margin-bottom: 10px;
+  }
+
+  .btn-outline {
+    background: transparent;
+    border: 1px solid #17a2b8;
+    color: #17a2b8;
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-outline:hover:not(:disabled) {
+    background: #17a2b8;
+    color: white;
+  }
+
+  .btn-outline:disabled {
+    border-color: #6c757d;
+    color: #6c757d;
+    cursor: not-allowed;
+  }
+
+  .disabled-note {
+    color: #6c757d;
+    font-style: italic;
+    margin-top: 5px;
+    display: block;
+  }
+
+  .checkbox-label.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  input:disabled,
+  select:disabled {
+    background-color: #e9ecef;
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
   @media (max-width: 768px) {
     .upload-area {
       flex-direction: column;
@@ -374,4 +612,3 @@
     }
   }
 </style>
-
