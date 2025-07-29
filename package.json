@@ -47,6 +47,7 @@
   "dependencies": {
     "@google/genai": "^1.10.0",
     "@google/generative-ai": "^0.2.0",
+    "adm-zip": "^0.5.16",
     "electron-log": "^5.4.1",
     "jsonrepair": "^3.13.0",
     "katex": "^0.16.0",

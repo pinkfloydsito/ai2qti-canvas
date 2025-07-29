@@ -30,7 +30,7 @@ class LaTeXParser {
       console.log(`📚 Found ${exercises.length} exercises`);
 
       const questions = [];
-      let questionId = 1;
+      let questionId = randomUUID();
 
       for (const exercise of exercises) {
         // Parse each exercise for questions/items
@@ -98,7 +98,7 @@ class LaTeXParser {
       if (items.length > 0) {
         // Use structured parsing
         for (let i = 0; i < items.length; i++) {
-          const question = await this.createQuestionFromItem(items[i], startId + i, useAI);
+          const question = await this.createQuestionFromItem(items[i], randomUUID(), useAI);
           questions.push(question);
         }
       } else {
@@ -154,7 +154,7 @@ class LaTeXParser {
     }
 
     return {
-      questionText: this.cleanLatexContent(questionText),
+      questionText: this.convertGraveAccents(this.cleanLatexContent(questionText)),
       choices: choices,
       type: 'multiple_choice'
     };
@@ -348,13 +348,31 @@ class LaTeXParser {
       .replace(/\\cite\{[^}]*\}/g, '') // Remove citations
       .replace(/\\index\{[^}]*\}/g, '') // Remove index entries
       .replace(/\\item\s*/, '') // Remove \item command
-      .replace(/{\\puntospopts}/g, '')
-      .replace(/\\puntospoptb/g, '') // Remove \puntospoptb markers
+      .replace(/{\\puntos[^}]*}/g, '')
+      .replace(/\\begin\{minipage\}\{[^}]*\}/g, '')
+      .replace(/\\hspace\{[^}]*\}/g, '')
+      .replace(/\\end\{minipage\}/g, '')
+      .replace(/\\end\{hspace\}/g, '')
       .replace(/\\begin\{enumerate\}(?:\[[^\]]*\])?[\s\S]*?\\end\{enumerate\}/g, '') // Remove enumerate blocks from question text
       .trim();
 
     return cleaned;
   }
+
+  convertGraveAccents = (content) => {
+    if (!content || typeof content !== 'string') {
+      return '';
+    }
+
+    const graveAccentMap = {
+      'a': 'á', 'e': 'é', 'i': 'í', 'o': 'ó', 'u': 'ú',
+    }
+
+    return content.replace(
+      /\\'\{?([aeiouAEIOU])\}?/g,
+      (match, letter) => graveAccentMap[letter] || match
+    );
+  };
 
   /**
    * Determine question type based on content analysis

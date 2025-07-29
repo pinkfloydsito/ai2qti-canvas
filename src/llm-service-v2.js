@@ -231,8 +231,8 @@ class LLMService {
 
     // Core prompt components
     const baseInstruction = withAttachments
-      ? 'consider the number of questions given in the file starting by the tag \\begin{ejerc}, copy all the questions from the attached files, using all its options. Inlude latex expressions of course'
-      : `Generate ${questionCount} questions from the text content`;
+      ? 'consider the number of questions given in the file starting by the tag \\begin{ejerc}, copy all the questions from the attached files, using all its options. Inlude latex expressions of course. Everything should be in spanis language.'
+      : `Generate ${questionCount} questions from the text content in spanish language!.`;
 
     const questionTypeInstruction = !withAttachments ? this.buildQuestionTypeInstruction(questionTypes) : `questions of types depending on the document: multiple_choice,
       true_false,

@@ -1,7 +1,6 @@
 <script>
   import { aiGenerationStore, aiGenerationActions } from "../stores/llm.js";
   import { llmStore } from "../stores/llm.js";
-  import LatexParser from "../services/latex-parser.js";
   import { createEventDispatcher } from "svelte";
   import { t } from "../stores/localization.js";
 
@@ -82,7 +81,10 @@
 
     // If attachment-only mode is enabled, update context text
     if (useAttachmentOnly && hasAttachedFiles) {
-      aiGenerationActions.updateParams({ contextText: attachmentOnlyPrompt });
+      aiGenerationActions.updateParams({
+        contextText: attachmentOnlyPrompt,
+        useAttachmentOnly: true,
+      });
     }
   }
 
@@ -142,15 +144,24 @@
 
     if (useAttachmentOnly && hasAttachedFiles) {
       // Set the default prompt when enabling attachment-only mode
-      aiGenerationActions.updateParams({ contextText: attachmentOnlyPrompt });
+      aiGenerationActions.updateParams({
+        contextText: attachmentOnlyPrompt,
+        useAttachmentOnly: true,
+      });
     } else if (!useAttachmentOnly) {
       // Clear the prompt when disabling attachment-only mode
-      aiGenerationActions.updateParams({ contextText: "" });
+      aiGenerationActions.updateParams({
+        contextText: "",
+        useAttachmentOnly: false,
+      });
     }
   }
 
   function useAttachmentOnlyPrompt() {
-    aiGenerationActions.updateParams({ contextText: attachmentOnlyPrompt });
+    aiGenerationActions.updateParams({
+      contextText: attachmentOnlyPrompt,
+      useAttachmentOnly: true,
+    });
     useAttachmentOnly = true;
   }
 
@@ -190,6 +201,7 @@
       difficultyLevel: aiParams.difficultyLevel,
       questionTypes: aiParams.questionTypes,
       includeMath: aiParams.includeMath,
+      useAttachmentOnly: aiParams.useAttachmentOnly,
       useAI: useAI,
     });
   }
@@ -387,7 +399,7 @@
           disabled={!hasAttachedFiles}
           on:change={handleAttachmentOnlyChange}
         />
-        Generar preguntas solo con archivos adjuntos
+        Generar preguntas solo de archivos adjuntos
       </label>
       {#if !hasAttachedFiles}
         <small class="disabled-note">Attach files to enable this option</small>
