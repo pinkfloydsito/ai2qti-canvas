@@ -4,7 +4,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import log from 'electron-log/main.js';
 
-import LLMService from './src/llm-service-v2.js';
+import LLMService from './src/llm-service.js';
 import LaTeXParser from './src/services/latex-parser.js';
 
 // Configure logging
