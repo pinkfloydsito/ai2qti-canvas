@@ -173,14 +173,36 @@ class LaTeXParser {
     while ((match = this.itemChoicePattern.exec(enumerateContent)) !== null) {
       const choiceText = match[1].trim();
       if (choiceText) {
+        // Check if this choice has the (R) marker indicating it's the correct answer
+        const { text: cleanedText, isCorrect } = this.extractAnswerMarker(choiceText);
+        
         choices.push({
-          text: this.cleanLatexContent(choiceText),
-          correct: false // We'll determine correct answer later or leave for manual setting
+          text: this.convertGraveAccents(this.cleanLatexContent(cleanedText)),
+          correct: isCorrect
         });
       }
     }
 
     return choices;
+  }
+
+  /**
+   * Extract answer marker (R) from choice text and determine if it's correct
+   * @param {string} choiceText - Raw choice text that may contain (R) marker
+   * @returns {Object} Object with cleaned text and isCorrect flag
+   */
+  extractAnswerMarker(choiceText) {
+    // Check for (R) marker at the beginning of the choice text
+    const answerMarkerPattern = /^\(R\)\s*/;
+    const hasMarker = answerMarkerPattern.test(choiceText);
+    
+    // Remove the (R) marker from the text
+    const cleanedText = choiceText.replace(answerMarkerPattern, '').trim();
+    
+    return {
+      text: cleanedText,
+      isCorrect: hasMarker
+    };
   }
 
   /**
@@ -191,6 +213,9 @@ class LaTeXParser {
    * @returns {Object} Question object
    */
   async createQuestionFromParsedContent(parsedContent, id, useAI) {
+    // Find the correct answer index based on the choices
+    const correctAnswerIndex = parsedContent.choices.findIndex(choice => choice.correct);
+    
     const question = {
       id: `latex_q_${randomUUID()}`,
       type: parsedContent.type,
@@ -198,7 +223,7 @@ class LaTeXParser {
       choices: parsedContent.choices,
       points: 1,
       source: 'latex_parser',
-      correctAnswer: 0 // Default to first choice, can be adjusted manually
+      correctAnswer: correctAnswerIndex >= 0 ? correctAnswerIndex : 0 // Use found index or default to first choice
     };
 
     if (useAI) {

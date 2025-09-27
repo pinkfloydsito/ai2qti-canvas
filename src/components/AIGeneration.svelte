@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { aiGenerationStore, aiGenerationActions } from "../stores/llm.js";
   import { llmStore } from "../stores/llm.js";
   import { createEventDispatcher } from "svelte";
